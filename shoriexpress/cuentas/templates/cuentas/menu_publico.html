@@ -1,0 +1,150 @@
+{% load static %}
+{% load producto_tags %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú completo - Shori Express</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+</head>
+<style>
+@keyframes cartBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+@keyframes cartPulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+.cart-animate {
+    animation: cartBounce 0.4s ease-in-out, cartPulse 0.6s ease-out;
+}
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc2626;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-width: 20px;
+    text-align: center;
+}
+</style>
+<body class="landing-body">
+
+{% include "cuentas/_client_navbar.html" with scrolled=False show_nav_links=False %}
+
+<!-- Hero Section -->
+<section class="landing-hero" id="hero" style="background-color: black;">
+    <div class="landing-hero-content" style="padding-top: 40px;">
+        <span class="landing-hero-badge">🍔 Nuestro Menú</span>
+        <h1>Todos nuestros<br><span class="text-brand">Productos</span></h1>
+        <p>Explora nuestro catálogo completo y disfruta de platos preparados con ingredientes frescos y de excelente calidad.</p>
+        {% if not usuario_logueado %}
+        <div class="landing-hero-btns" style="margin-top: 20px;">
+            <a href="{% url 'login' %}" class="se-btn se-btn-primary se-btn-lg">Inicia sesión para ordenar</a>
+            <a href="{% url 'register' %}" class="se-btn se-btn-outline se-btn-lg" style="border-color: rgba(255,255,255,0.3); color: #fff;">Crear cuenta</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Menu Grid Section -->
+<section class="landing-section" style="padding-top: 48px; padding-bottom: 60px;">
+    <div class="landing-container">
+        <div class="landing-section-header">
+            <span class="landing-section-badge">Carta Completa</span>
+            <h2>Todos nuestros <span class="text-brand">productos</span></h2>
+            <p>Descubre toda la variedad que Shori Express tiene para ti. Cada producto está preparado con los mejores ingredientes.</p>
+        </div>
+        
+        <div class="landing-menu-grid">
+            {% for producto in productos %}
+            <div class="landing-menu-card">
+                <div class="landing-menu-img">
+                    <img src="{{ producto|producto_imagen_url }}" alt="{{ producto.nombre_producto }}" loading="lazy"
+                        onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
+                </div>
+                <div class="landing-menu-info">
+                    <h4>{{ producto.nombre_producto }}</h4>
+                    <p>{{ producto.descripcion_producto|default:"Preparado al momento con ingredientes frescos." }}</p>
+                    
+                    {% if producto.ingredientes.all %}
+                    <details style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);">
+                        <summary style="cursor: pointer; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px;">
+                            📝 Ver ingredientes ({{ producto.ingredientes.all|length }})
+                        </summary>
+                        <ul style="margin: 8px 0 0 16px; padding-left: 0; list-style: disc;">
+                            {% for ingrediente in producto.ingredientes.all %}
+                            <li style="margin: 4px 0;">{{ ingrediente.insumo.nombre_insumo }} – {{ ingrediente.cantidad }} {{ ingrediente.insumo.get_unidad_medida_display }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                    {% endif %}
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                        <span style="font-weight: 700; color: var(--brand-color); font-size: 1.2rem;">${{ producto.precio_venta }}</span>
+                        {% if usuario_logueado %}
+                            <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm">+ Agregar</a>
+                        {% else %}
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="se-btn se-btn-outline se-btn-sm">Inicia sesión</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <p style="font-size: 1.1rem; color: var(--text-secondary);">😔 No hay productos disponibles en este momento.</p>
+                <p style="color: var(--text-secondary); margin-top: 8px;">Por favor, intenta más tarde.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+{% if not usuario_logueado %}
+<section class="landing-section landing-section-alt">
+    <div class="landing-container">
+        <div class="landing-cta-box">
+            <h2>¿Listo para ordenar?</h2>
+            <p>Crea una cuenta gratis y empieza a disfrutar de nuestros deliciosos platos con entrega rápida.</p>
+            <div class="landing-cta-actions">
+                <a href="{% url 'register' %}" class="se-btn se-btn-primary se-btn-lg">Crear Cuenta Gratis</a>
+                <a href="{% url 'login' %}" class="se-btn se-btn-outline se-btn-lg" style="border-color: rgba(255,255,255,0.3); color: #fff;">Ya tengo cuenta</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Footer -->
+<footer class="landing-footer">
+    <div class="landing-container">
+        <div class="landing-footer-inner">
+            <div class="landing-footer-brand">
+                <span class="brand-icon">SE</span>
+                <span>Shori Express</span>
+            </div>
+            <p class="landing-footer-text">© 2025 Shori Express. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    (function() {
+        var saved = localStorage.getItem('shori-theme');
+        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,854 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>📋 Detalles de Facturas</h2>
+    <a href="{% url 'crear_detalle' %}" class="se-btn se-btn-primary">+ Agregar Producto</a>
+</div>
+
+<!-- Panel de Filtros Avanzados (Auditoría) -->
+<div class="se-filter-panel">
+    <h3 class="se-filter-title">🔍 Filtros de Auditoría</h3>
+    <form method="GET" action="{% url 'lista_detalles' %}" class="se-filter-form">
+        <div class="se-filter-row">
+            <div class="se-filter-group">
+                <label for="estado_pedido">Estado del Pedido:</label>
+                <select name="estado_pedido" id="estado_pedido" class="se-filter-select">
+                    <option value="">-- Todos los estados --</option>
+                    {% for estado_value, estado_label in estados_disponibles %}
+                        <option value="{{ estado_value }}" 
+                            {% if filtro_estado == estado_value %}selected{% endif %}>
+                            {{ estado_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="se-filter-group">
+                <label for="disponibilidad">Disponibilidad del Producto:</label>
+                <select name="disponibilidad" id="disponibilidad" class="se-filter-select">
+                    <option value="">-- Todos --</option>
+                    <option value="disponible" {% if filtro_disponibilidad == 'disponible' %}selected{% endif %}>
+                        ✓ Disponible
+                    </option>
+                    <option value="no_disponible" {% if filtro_disponibilidad == 'no_disponible' %}selected{% endif %}>
+                        ✗ No Disponible
+                    </option>
+                </select>
+            </div>
+
+            <div class="se-filter-buttons">
+                <button type="submit" class="se-btn se-btn-success">
+                    🔎 Filtrar
+                </button>
+                <a href="{% url 'lista_detalles' %}" class="se-btn se-btn-secondary">
+                    ↺ Limpiar
+                </a>
+            </div>
+        </div>
+
+        <!-- Indicadores de Filtros Activos -->
+        {% if filtro_estado or filtro_disponibilidad %}
+        <div class="se-filter-active-tags">
+            <span class="se-filter-label">Filtros activos:</span>
+            {% if filtro_estado %}
+                <span class="se-filter-tag">
+                    Estado: <strong>{{ filtro_estado }}</strong>
+                    <a href="?disponibilidad={{ filtro_disponibilidad }}" class="se-filter-tag-close">×</a>
+                </span>
+            {% endif %}
+            {% if filtro_disponibilidad %}
+                <span class="se-filter-tag">
+                    Disponibilidad: <strong>{{ filtro_disponibilidad }}</strong>
+                    <a href="?estado_pedido={{ filtro_estado }}" class="se-filter-tag-close">×</a>
+                </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Contador de Resultados -->
+        <div class="se-filter-counter">
+            📊 <strong>{{ contador_detalles }}</strong> detalle(s) encontrado(s)
+        </div>
+    </form>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchDetalles"></div>
+
+<!-- Cards Container -->
+<div class="se-cards-container" id="cardsContainer">
+    {% for d in detalles %}
+    <div class="se-card se-card-invoice"
+         data-invoice-id="{{ d.pedido.id }}"
+         data-pedido-estado="{{ d.pedido.estado_pedido }}"
+         data-producto-habilitado="{% if d.producto.esta_habilitado %}si{% else %}no{% endif %}"
+         data-fecha-pedido="{{ d.pedido.fecha_pedido|date:'Y-m-d' }}">
+        <!-- Card Header -->
+        <div class="se-card-header">
+            <div class="se-card-title">
+                <h3>🧾 Factura #{{ d.pedido.id }}</h3>
+                <span class="se-badge se-badge-{{ d.pedido.get_estado_pedido_display|lower }}">
+                    {{ d.pedido.get_estado_pedido_display }}
+                </span>
+            </div>
+            <div class="se-card-actions">
+                <a href="{% url 'editar_detalle' d.id %}" class="se-btn se-btn-warning se-btn-sm" title="Editar">
+                    ✏️
+                </a>
+                <a href="{% url 'eliminar_detalle' d.id %}" class="se-btn se-btn-danger se-btn-sm" title="Eliminar">
+                    🗑️
+                </a>
+            </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="se-card-body">
+            <!-- Invoice Info -->
+            <div class="se-invoice-info">
+                <div class="se-info-row">
+                    <span class="se-info-label">📅 Fecha y Hora:</span>
+                    <span class="se-info-value">{{ d.pedido.fecha_pedido|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="se-info-row">
+                    <span class="se-info-label">👤 Cliente:</span>
+                    <span class="se-info-value">{{ d.pedido.usuario.primer_nombre }} {{ d.pedido.usuario.apellido }}</span>
+                </div>
+                <div class="se-info-row">
+                    <span class="se-info-label">👨‍💼 Vendedor:</span>
+                    <span class="se-info-value">{{ d.pedido.usuario.get_rol_display|default:"Administrador" }}</span>
+                </div>
+                <div class="se-info-row">
+                    <span class="se-info-label">📦 Tipo Pedido:</span>
+                    <span class="se-info-value">{{ d.pedido.get_tipo_pedido_display }}</span>
+                </div>
+            </div>
+
+            <!-- Product Details Table -->
+            <div class="se-product-section">
+                <h4>🍔 Detalles del Producto</h4>
+                <table class="se-mini-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-center">Precio Unit.</th>
+                            <th class="text-center">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="se-product-name">
+                                    <strong>{{ d.producto.nombre_producto }}</strong>
+                                    {% if d.producto.imagen %}
+                                    <img src="{{ d.producto.imagen.url }}" alt="{{ d.producto.nombre_producto }}" class="se-product-thumb">
+                                    {% endif %}
+                                </div>
+                                {% if d.notas_especiales %}
+                                <div class="se-product-notes">
+                                    <small>📝 {{ d.notas_especiales }}</small>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="se-badge se-badge-neutral">{{ d.cantidad }}</span>
+                            </td>
+                            <td class="text-center">${{ d.precio_unitario_momento }}</td>
+                            <td class="text-center"><strong>${{ d.subtotal }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Stock Information -->
+            <div class="se-stock-section">
+                <h4>📊 Información de Inventario</h4>
+                <div class="se-stock-grid">
+                    <div class="se-stock-item">
+                        <span class="se-stock-label">Stock Remanente:</span>
+                        <span class="se-stock-value {% if d.stock_remanente_post_venta <= 5 %}se-stock-low{% endif %}">
+                            {% if d.stock_remanente_post_venta %}
+                                {{ d.stock_remanente_post_venta }} unidades
+                            {% else %}
+                                <em>No registrado</em>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="se-stock-item">
+                        <span class="se-stock-label">Estado Producto:</span>
+                        <span class="se-badge se-badge-{{ d.producto.esta_habilitado|yesno:'success,warning' }}">
+                            {{ d.producto.esta_habilitado|yesno:"Disponible,No Disponible" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Section -->
+            <div class="se-total-section">
+                <div class="se-total-row">
+                    <span class="se-total-label">Subtotal:</span>
+                    <span class="se-total-value">${{ d.subtotal }}</span>
+                </div>
+                <div class="se-total-row">
+                    <span class="se-total-label">IVA (19%):</span>
+                    <span class="se-total-value">${{ d.subtotal_con_iva|add:"-"|add:d.subtotal }}</span>
+                </div>
+                <div class="se-total-row se-total-grand">
+                    <span class="se-total-label">Total:</span>
+                    <span class="se-total-value">${{ d.subtotal_con_iva }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="se-empty-state">
+        <div class="se-empty-icon">📋</div>
+        <h3>No hay detalles registrados</h3>
+        <p>No se encontraron detalles de pedidos en el sistema.</p>
+        <a href="{% url 'crear_detalle' %}" class="se-btn se-btn-primary">
+            + Agregar Primer Detalle
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" class="se-toast-container"></div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchDetalles',
+        filterIdPrefix: 'detallePedidoCards',
+        targetSelector: '.se-card-invoice',
+        filters: [
+            {
+                type: 'text',
+                label: '🔍 Pedido #',
+                placeholder: 'Número de pedido / factura...',
+                rowDataKey: 'invoiceId',
+            },
+            {
+                type: 'text',
+                label: 'Cliente',
+                placeholder: 'Nombre del cliente...',
+                selector: '.se-info-row:nth-of-type(2) .se-info-value',
+            },
+            {
+                type: 'text',
+                label: 'Producto',
+                placeholder: 'Nombre del producto...',
+                selector: '.se-product-name strong',
+            },
+            {
+                type: 'select',
+                label: 'Estado pedido',
+                rowDataKey: 'pedidoEstado',
+                options: [
+                    { value: 'pendiente', label: 'Pendiente' },
+                    { value: 'preparacion', label: 'En preparación' },
+                    { value: 'listo', label: 'Listo' },
+                    { value: 'entregado', label: 'Entregado' },
+                    { value: 'cancelado', label: 'Cancelado' },
+                ],
+            },
+            {
+                type: 'select',
+                label: 'Producto habilitado',
+                rowDataKey: 'productoHabilitado',
+                options: [
+                    { value: 'si', label: 'Sí' },
+                    { value: 'no', label: 'No' },
+                ],
+            },
+            {
+                type: 'date_range',
+                label: 'Fecha pedido',
+                rowDataKey: 'fechaPedido',
+            },
+        ]
+    });
+
+    // Toast Notification System
+    window.showToast = function(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `se-toast se-toast-${type}`;
+        
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        toast.innerHTML = `
+            <div class="se-toast-content">
+                <span class="se-toast-icon">${icon}</span>
+                <span class="se-toast-message">${message}</span>
+            </div>
+            <button class="se-toast-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 5000);
+    };
+
+    // Show success messages for existing actions
+});
+</script>
+
+{% if messages %}
+    {% for message in messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast("{{ message|escapejs }}", "{{ message.tags|escapejs }}");
+            });
+        </script>
+    {% endfor %}
+{% endif %}
+
+<style>
+/* ===== ESTILOS DE FILTROS AVANZADOS ===== */
+.se-filter-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    color: white;
+}
+
+.se-filter-title {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.se-filter-form {
+    width: 100%;
+}
+
+.se-filter-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.se-filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.se-filter-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.se-filter-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    background-color: rgba(255,255,255,0.95);
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.se-filter-select:hover {
+    border-color: rgba(255,255,255,0.6);
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.se-filter-select:focus {
+    outline: none;
+    border-color: white;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+.se-filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.se-filter-buttons .se-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.se-btn-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.se-btn-success:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.se-btn-secondary {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.se-btn-secondary:hover {
+    background-color: rgba(255,255,255,0.3);
+    border-color: white;
+}
+
+.se-filter-active-tags {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid rgba(255,255,255,0.2);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.se-filter-label {
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+}
+
+.se-filter-tag {
+    background-color: rgba(255,255,255,0.25);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+}
+
+.se-filter-tag strong {
+    font-weight: 700;
+    color: white;
+}
+
+.se-filter-tag-close {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 4px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.se-filter-tag-close:hover {
+    opacity: 1;
+}
+
+.se-filter-counter {
+    background-color: rgba(255,255,255,0.15);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    margin-top: 10px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Responsive Design para Filtros */
+@media (max-width: 768px) {
+    .se-filter-row {
+        flex-direction: column;
+    }
+
+    .se-filter-group {
+        width: 100%;
+    }
+
+    .se-filter-buttons {
+        width: 100%;
+    }
+
+    .se-filter-buttons .se-btn {
+        flex: 1;
+    }
+
+    .se-filter-active-tags {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* High specificity styles to override global CSS */
+.se-cards-container .se-card * {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-header {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-header * {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-body * {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-body strong {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-body h4 {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-card-body small {
+    color: #000000 !important;
+}
+
+.se-cards-container .se-card .se-badge {
+    color: #000000 !important;
+}
+
+/* Card Styles */
+.se-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.se-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    border: 1px solid #000000;
+}
+
+.se-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    border-color: #ff0000;
+}
+
+.se-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    color: #000000;
+    border-bottom: 3px solid #ff0000;
+}
+
+.se-card-title h3 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.se-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.se-card-body {
+    padding: 20px;
+}
+
+.se-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #000000;
+}
+
+.se-info-label {
+    font-weight: 600;
+    color: #000000;
+}
+
+.se-info-value {
+    color: #000000;
+}
+
+.se-product-section {
+    margin: 20px 0;
+}
+
+.se-product-section h4 {
+    margin: 0 0 10px 0;
+    color: #000000;
+    font-weight: bold;
+}
+
+.se-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.se-mini-table th {
+    background: #ffffff;
+    color: #000000;
+    padding: 8px;
+    text-align: left;
+    border-bottom: 2px solid #ff0000;
+}
+
+.se-mini-table td {
+    padding: 8px;
+    border-bottom: 1px solid #000000;
+}
+
+.se-product-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.se-product-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.se-product-notes {
+    margin-top: 5px;
+    color: #000000;
+}
+
+.se-stock-section {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #000000;
+}
+
+.se-stock-section h4 {
+    margin: 0 0 10px 0;
+    color: #000000;
+    font-weight: bold;
+}
+
+.se-stock-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.se-stock-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.se-stock-label {
+    color: #000000;
+    font-weight: 600;
+}
+
+.se-stock-value {
+    color: #000000;
+}
+
+.se-stock-low {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.se-total-section {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px solid #000000;
+}
+
+.se-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.se-total-label {
+    color: #000000;
+    font-weight: 600;
+}
+
+.se-total-value {
+    color: #000000;
+}
+
+.se-total-grand {
+    border-top: 2px solid #ff0000;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #000000;
+}
+
+.se-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #000000;
+}
+
+.se-empty-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+/* Toast Styles */
+.se-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.se-toast {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin-bottom: 10px;
+    min-width: 300px;
+    animation: slideIn 0.3s ease;
+    border: 1px solid #000000;
+}
+
+.se-toast-success {
+    border-left: 4px solid #ff0000;
+}
+
+.se-toast-error {
+    border-left: 4px solid #000000;
+}
+
+.se-toast-warning {
+    border-left: 4px solid #333333;
+}
+
+.se-toast-content {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+}
+
+.se-toast-icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.se-toast-close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #999;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.text-center {
+    text-align: center;
+}
+
+.se-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #000000;
+}
+
+.se-badge-success {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ff0000;
+}
+
+.se-badge-warning {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ff0000;
+}
+
+.se-badge-neutral {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.se-badge-pendiente {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.se-badge-preparación {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.se-badge-listo {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ff0000;
+}
+
+.se-badge-entregado {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.se-badge-cancelado {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ff0000;
+}
+</style>
+{% endblock %}

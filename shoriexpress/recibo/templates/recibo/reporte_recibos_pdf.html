@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Recibos - Shori Express</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 10px; color: #111; }
+        .header { border-bottom: 2px solid #DC2626; margin-bottom: 12px; padding-bottom: 8px; }
+        .title { font-size: 20px; font-weight: 700; color: #DC2626; }
+        .meta { font-size: 10px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #ddd; padding: 5px; }
+        th { background: #111; color: #fff; font-size: 9px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Reporte de Recibos</div>
+        <div class="meta">Shori Express | Generado: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Recibo</th>
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Método</th>
+                <th>Total Pagado</th>
+                <th>Fecha Emisión</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in recibos %}
+            <tr>
+                <td>#{{ r.id }}</td>
+                <td>#{{ r.pedido.id }}</td>
+                <td>{{ r.pedido.usuario.primer_nombre }} {{ r.pedido.usuario.apellido }}</td>
+                <td>{{ r.metodo_pago.nombre_metodo }}</td>
+                <td>${{ r.total_pagado }}</td>
+                <td>{{ r.fecha_emision|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No hay recibos para reportar.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

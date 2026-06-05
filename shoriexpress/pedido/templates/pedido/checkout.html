@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen del pedido - Shori Express</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+</head>
+<body class="landing-body">
+<nav class="landing-nav scrolled" style="position: relative;">
+    <div class="landing-nav-inner">
+        <a href="{% url 'landing' %}" class="landing-nav-brand">
+            <span class="brand-icon">SE</span>
+            <span>Shori Express</span>
+        </a>
+        <div class="landing-nav-actions client-nav-actions">
+            <a href="{% url 'ver_carrito' %}" class="se-btn se-btn-primary se-btn-sm">Ir al carrito</a>
+            <a href="{% url 'landing' %}" class="se-btn se-btn-outline se-btn-sm">Inicio</a>
+        </div>
+    </div>
+</nav>
+
+<div style="max-width: 720px; margin: 40px auto; padding: 0 20px;">
+    <h1 style="text-align: center; margin-bottom: 8px;">Resumen del pedido</h1>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 24px;">
+        Revisa los productos antes de confirmar el pago en el carrito.
+    </p>
+
+    <div class="se-card">
+        <div class="se-card-body" style="padding: 0;">
+            <div class="se-table-wrapper" style="border: none;">
+                <table class="se-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-center">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key, item in cart.cart.items %}
+                        <tr>
+                            <td><strong>{{ item.nombre }}</strong></td>
+                            <td class="text-center">{{ item.cantidad }}</td>
+                            <td class="text-center">${{ item.total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align: center; padding: 32px;">
+                                Tu carrito está vacío.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
+        <a href="{% url 'ver_carrito' %}" class="se-btn se-btn-primary" style="text-align: center;">
+            Continuar en el carrito (confirmar pago)
+        </a>
+        <a href="{% url 'menu_publico' %}" class="se-btn se-btn-outline se-btn-sm" style="text-align: center;">
+            Seguir comprando
+        </a>
+    </div>
+</div>
+</body>
+</html>

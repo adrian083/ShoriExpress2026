@@ -1,0 +1,267 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shori Express - Sistema de Gestión</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <style>
+        /* --- AJUSTES DE LOGO APROPIADO --- */
+        .se-sidebar-brand, .se-topbar-brand {
+            display: flex;
+            align-items: center;
+            /* Espaciado fino entre logo y texto */
+            gap: 8px; 
+        }
+
+        /* Logo en el Sidebar (Menú lateral) */
+        .sidebar-logo {
+            width: 50px; /* Tamaño reducido y elegante */
+            height: 50px;
+            object-fit: contain;
+        }
+
+        /* Logo en el Topbar (Barra superior) */
+        .topbar-logo {
+            width: 18px; /* Ligeramente más pequeño para la barra */
+            height: 18px;
+            object-fit: contain;
+            /* Lo hace blanco para que resalte en fondo oscuro */
+            filter: brightness(0) invert(1); 
+        }
+    </style>
+</head>
+<body>
+
+<div class="se-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="se-sidebar" id="sidebar">
+    <div class="se-sidebar-header">
+        <a class="se-sidebar-brand" href="{% url 'home' %}">
+            <img src="{% static 'IMG/SHORIp.ico' %}" alt="Shori" class="sidebar-logo">
+            <span style="font-weight: 700; letter-spacing: -0.5px; font-size: 1.1rem;">Shori Express</span>
+        </a>
+        <button class="se-sidebar-close" onclick="closeSidebar()" aria-label="Cerrar menú">✕</button>
+    </div>
+
+    <nav class="se-sidebar-nav">
+        <div class="se-nav-section-label">Principal</div>
+        <a class="se-sidebar-link" href="{% url 'home' %}">
+            <span class="se-sidebar-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'ver_configuracion' %}">
+            <span class="se-sidebar-icon">🔧</span>
+            <span>Configuración</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_respaldos' %}">
+            <span class="se-sidebar-icon">💾</span>
+            <span>Respaldos BD</span>
+        </a>
+        {% if request.session.usuario_id %}
+        <a class="se-sidebar-link" href="{% url 'mi_cuenta' request.session.usuario_id %}">
+            <span class="se-sidebar-icon">⚙️</span>
+            <span>Mi Cuenta</span>
+        </a>
+        {% endif %}
+
+        <div class="se-nav-section-label">Personal</div>
+        <a class="se-sidebar-link" href="{% url 'lista_roles' %}">
+            <span class="se-sidebar-icon">🔑</span>
+            <span>Roles</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_usuarios' %}">
+            <span class="se-sidebar-icon">👥</span>
+            <span>Usuarios</span>
+        </a>
+
+        <div class="se-nav-section-label">Inventario</div>
+        <a class="se-sidebar-link" href="{% url 'lista_inventario' %}">
+            <span class="se-sidebar-icon">📦</span>
+            <span>Inventario</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'carga_masiva' %}">
+            <span class="se-sidebar-icon">⬆️</span>
+            <span>Carga masiva</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_productos' %}">
+            <span class="se-sidebar-icon">🍔</span>
+            <span>Productos</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_recetas' %}">
+            <span class="se-sidebar-icon">📋</span>
+            <span>Recetas</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_movimientos' %}">
+            <span class="se-sidebar-icon">🔄</span>
+            <span>Movimientos</span>
+        </a>
+
+        <div class="se-nav-section-label">Ventas</div>
+        <a class="se-sidebar-link" href="{% url 'lista_pedidos' %}">
+            <span class="se-sidebar-icon">🛒</span>
+            <span>Pedidos</span>
+        </a>
+
+        <a class="se-sidebar-link" href="{% url 'lista_detalles' %}">
+            <span class="se-sidebar-icon">📕</span>
+            <span>Detalle Pedido</span>
+        </a>
+
+        <a class="se-sidebar-link" href="{% url 'lista_metodos' %}">
+            <span class="se-sidebar-icon">💳</span>
+            <span>Pagos</span>
+        </a>
+        <a class="se-sidebar-link" href="{% url 'lista_recibos' %}">
+            <span class="se-sidebar-icon">🧾</span>
+            <span>Recibos</span>
+        </a>
+    </nav>
+
+    <!-- Sección de Tienda al final -->
+    <div class="se-nav-section-label">Tienda</div>
+    <a class="se-sidebar-link" href="{% url 'landing' %}">
+        <span class="se-sidebar-icon">🏠</span>
+        <span>Ir a Tienda</span>
+    </a>
+
+    <div class="se-sidebar-footer">
+        {% if request.session.usuario_nombre %}
+        <div style="padding: 8px 14px; margin-bottom: 8px; font-size: 0.82rem; color: var(--text-secondary);">
+            <strong style="color: var(--text-primary);">{{ request.session.usuario_nombre }}</strong><br>
+            <span style="font-size: 0.75rem;">{{ request.session.usuario_rol|default:"Usuario" }}</span>
+        </div>
+        <a href="{% url 'logout' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width: 100%; margin-bottom: 8px;">
+            🚪 Cerrar Sesión
+        </a>
+        {% endif %}
+        <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeBtn" title="Cambiar tema" aria-label="Cambiar tema">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Modo Oscuro</span>
+        </button>
+    </div>
+</aside>
+
+<header class="se-topbar">
+    <button class="se-hamburger" onclick="openSidebar()" aria-label="Abrir menú">
+        <span class="se-hamburger-line"></span>
+        <span class="se-hamburger-line"></span>
+        <span class="se-hamburger-line"></span>
+    </button>
+    <a class="se-topbar-brand" href="{% url 'home' %}">
+        <img src="{% static 'IMG/SHORIp.ico' %}" alt="Shori" class="topbar-logo">
+        <span style="font-weight: 600; font-size: 1rem; color: rgba(255,255,255,0.95);">Shori Express</span>
+    </a>
+    <div class="se-topbar-spacer"></div>
+    {% if request.session.usuario_nombre %}
+    <span style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 500; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px;">
+        👤 {{ request.session.usuario_nombre }}
+    </span>
+    {% endif %}
+</header>
+
+<main class="se-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}" style="margin-bottom: 16px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+</main>
+
+<script>
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.se-sidebar-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 1024) {
+                closeSidebar();
+            }
+        });
+    });
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.setAttribute('data-theme', 'light');
+            icon.textContent = '🌙';
+            text.textContent = 'Modo Oscuro';
+            localStorage.setItem('shori-theme', 'light');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            icon.textContent = '☀️';
+            text.textContent = 'Modo Claro';
+            localStorage.setItem('shori-theme', 'dark');
+        }
+    }
+
+    (function() {
+        const saved = localStorage.getItem('shori-theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if(icon) icon.textContent = '☀️';
+            if(text) text.textContent = 'Modo Claro';
+        }
+    })();
+
+    (function() {
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.se-sidebar-link').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href !== '/' && currentPath.includes(href)) {
+                link.classList.add('active');
+            } else if (href === '/' && currentPath === '/') {
+                link.classList.add('active');
+            }
+        });
+    })();
+</script>
+
+<!-- Sistema de Toast Notifications -->
+<script src="{% static 'JS/toast.js' %}"></script>
+<script>
+// Convertir mensajes de Django a toasts
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener todos los mensajes de Django
+    const alerts = document.querySelectorAll('.se-alert');
+    alerts.forEach(alert => {
+        const text = alert.textContent.trim();
+        let type = 'info';
+        
+        if (alert.classList.contains('se-alert-success')) {
+            type = 'success';
+        } else if (alert.classList.contains('se-alert-error')) {
+            type = 'error';
+        }
+        
+        if (text) {
+            showToast(text, type);
+        }
+    });
+});
+</script>
+</body>
+</html>

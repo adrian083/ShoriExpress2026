@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <div>
+        <h2>Respaldos de Base de Datos</h2>
+        <p style="margin: 0; color: var(--text-secondary);">Genera y descarga copias de seguridad de la base de datos. Soporta SQLite y MySQL si mysqldump está instalado.</p>
+    </div>
+    <form method="post" action="{% url 'crear_respaldo' %}">
+        {% csrf_token %}
+        <button type="submit" class="se-btn se-btn-primary">Crear nuevo respaldo</button>
+    </form>
+</div>
+
+<div class="se-table-wrapper" style="margin-top: 16px;">
+    <table class="se-table">
+        <thead>
+            <tr>
+                <th>Archivo</th>
+                <th class="text-center">Tamaño</th>
+                <th class="text-center">Modificado</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for backup in backups %}
+            <tr>
+                <td>{{ backup.name }}</td>
+                <td class="text-center">{{ backup.size|floatformat:2 }} bytes</td>
+                <td class="text-center">{{ backup.mtime|date:"d/m/Y H:i" }}</td>
+                <td class="text-center">
+                    <a href="{% url 'descargar_respaldo' backup.name %}" class="se-btn se-btn-outline se-btn-sm">Descargar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="4">No hay respaldos generados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

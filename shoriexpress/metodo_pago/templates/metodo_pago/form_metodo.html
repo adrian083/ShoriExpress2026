@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card" style="max-width: 560px;">
+    <div class="se-form-header">
+        <h3>{% if metodo %}Editar{% else %}Crear{% endif %} Método de Pago</h3>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="metodoPagoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="nombre">Nombre del Método *</label>
+                    <input type="text" 
+                           id="nombre"
+                           name="nombre"
+                           class="se-form-control" 
+                           value="{{ metodo.nombre_metodo|default:'' }}"
+                           placeholder="Ej: Tarjeta, Efectivo, Nequi..." 
+                           required
+                           minlength="3"
+                           maxlength="50"
+                           pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"
+                           title="El nombre debe tener entre 3 y 50 caracteres (solo letras).">
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="descripcion">Descripción (opcional)</label>
+                    <input type="text" 
+                           id="descripcion"
+                           name="descripcion"
+                           class="se-form-control" 
+                           value="{{ metodo.descripcion|default:'' }}"
+                           placeholder="Ej: Pago con tarjeta débito o crédito"
+                           maxlength="100"
+                           title="Máximo 100 caracteres.">
+                </div>
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="esta_activo" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="esta_activo" name="esta_activo" value="1"
+                               {% if metodo is None or metodo.esta_activo %}checked{% endif %}>
+                        <span>Método activo (visible para cobros / checkout)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 20px;">
+                <a href="{% url 'lista_metodos' %}" class="se-btn se-btn-outline">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if metodo %}Actualizar{% else %}Guardar{% endif %} Método
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('metodoPagoForm').addEventListener('submit', function(e) {
+        const nombreInput = document.getElementById('nombre');
+        const descInput = document.getElementById('descripcion');
+
+        // Limpiar espacios al inicio y al final antes de enviar
+        nombreInput.value = nombreInput.value.trim();
+        descInput.value = descInput.value.trim();
+
+        if (nombreInput.value.length < 3) {
+            alert("El nombre del método de pago es muy corto.");
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

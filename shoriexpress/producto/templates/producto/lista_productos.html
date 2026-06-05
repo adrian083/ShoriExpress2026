@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load producto_tags %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Catálogo de Productos</h2>
+    <a href="{% url 'crear_producto' %}" class="se-btn se-btn-primary">+ Nuevo Producto</a>
+</div>
+
+<div class="se-search-container">
+    <div class="se-search-bar">
+        <div class="se-search-field" style="flex: 2;">
+            <label class="se-form-label">🔍 Buscar Producto</label>
+            <input type="text" id="searchProducto" class="se-form-control" placeholder="Nombre o descripción...">
+        </div>
+        <div class="se-search-field se-search-actions">
+            <button type="button" class="se-btn se-btn-outline se-btn-sm" onclick="document.getElementById('searchProducto').value=''; filtrarProductos();">Limpiar</button>
+        </div>
+    </div>
+    <div class="se-search-count" id="productCount"></div>
+</div>
+
+<div class="se-products-grid" id="productsGrid">
+    {% for p in productos %}
+    <div class="se-product-card" data-nombre="{{ p.nombre_producto|lower }}" data-desc="{{ p.descripcion_producto|lower|default:'' }}">
+        
+        <img src="{{ p|producto_imagen_url }}" alt="{{ p.nombre_producto }}"
+             loading="lazy"
+             style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0;"
+             onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
+
+        <div class="se-product-card-body">
+            <h5>{{ p.nombre_producto }}</h5>
+            <p style="font-size: 0.9rem; color: var(--text-muted); height: 3em; overflow: hidden;">{{ p.descripcion_producto }}</p>
+            <p style="font-weight: 700; color: var(--accent-green, #22c55e); font-size: 1.1rem; margin-top: 8px;">${{ p.precio_venta }}</p>
+        </div>
+        <div class="se-product-card-footer" style="padding: 12px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--border-color);">
+            <a href="/recetas/crear/?producto_id={{ p.id }}" class="se-btn se-btn-primary se-btn-sm" title="Asignar ingredientes" style="flex: 1; text-align: center;">📋 Receta</a>
+            <a href="{% url 'editar_producto' p.id %}" class="se-btn se-btn-warning se-btn-sm" style="flex: 1; text-align: center;">Editar</a>
+            <a href="{% url 'eliminar_producto' p.id %}" class="se-btn se-btn-danger se-btn-sm" style="flex: 1; text-align: center;">Borrar</a>
+            <form action="{% url 'toggle_disponible' p.id %}" method="post" style="flex: 1; min-width: 120px;">
+                {% csrf_token %}
+                <button type="submit" class="se-btn {% if p.esta_disponible %}se-btn-success{% else %}se-btn-secondary{% endif %} se-btn-sm" style="width: 100%;">
+                    {% if p.esta_disponible %}Deshabilitar{% else %}Habilitar{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="se-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;" id="emptyProducts">
+        <div class="empty-icon" style="font-size: 3rem;">🍔</div>
+        <p>No hay productos registrados aún.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<details style="margin-top: 24px;">
+    <summary style="cursor: pointer; font-weight: 600; color: var(--text-secondary);">🔎 Filtros por combo, menú y catálogo (tabla)</summary>
+    <div class="se-search-container" id="searchProductosGrid" style="margin-top: 12px;"></div>
+    <div class="se-table-wrapper" style="margin-top: 8px;">
+        <table class="se-table" id="tablaProductosGrid">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Combo</th>
+                    <th>Menú</th>
+                    <th>Catálogo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td><strong>{{ p.nombre_producto }}</strong></td>
+                    <td>{% if p.es_combo %}si combo{% else %}no combo{% endif %}</td>
+                    <td>{% if p.esta_disponible %}disponible en menú{% else %}no en menú{% endif %}</td>
+                    <td>{% if p.esta_habilitado %}habilitado catálogo{% else %}inhabilitado catálogo{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchProductosGrid',
+        tableId: 'tablaProductosGrid',
+        filters: [
+            { type: 'text', label: '🔍 Nombre', placeholder: 'Producto...', columns: [0] },
+            { type: 'select', label: 'Combo', column: 1, options: [
+                { value: 'si combo', label: 'Sí' },
+                { value: 'no combo', label: 'No' },
+            ]},
+            { type: 'select', label: 'En menú', column: 2, options: [
+                { value: 'disponible en menú', label: 'Disponible' },
+                { value: 'no en menú', label: 'No' },
+            ]},
+            { type: 'select', label: 'Catálogo', column: 3, options: [
+                { value: 'habilitado catálogo', label: 'Habilitado' },
+                { value: 'inhabilitado catálogo', label: 'Inhabilitado' },
+            ]},
+        ]
+    });
+});
+</script>
+
+<script>
+// La lógica de filtrado se mantiene igual de funcional
+function filtrarProductos() {
+    const query = document.getElementById('searchProducto').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.se-product-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+        const nombre = card.getAttribute('data-nombre') || '';
+        const desc = card.getAttribute('data-desc') || '';
+        const match = !query || nombre.includes(query) || desc.includes(query);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+
+    const countEl = document.getElementById('productCount');
+    if (countEl && cards.length > 0) {
+        countEl.textContent = 'Mostrando ' + visible + ' de ' + cards.length + ' productos';
+    }
+}
+
+document.getElementById('searchProducto').addEventListener('input', filtrarProductos);
+document.addEventListener('DOMContentLoaded', filtrarProductos);
+</script>
+{% endblock %}

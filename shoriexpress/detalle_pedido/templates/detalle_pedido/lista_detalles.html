@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Consulta de Detalles de Pedido</h2>
+    <a href="{% url 'crear_detalle' %}" class="se-btn se-btn-primary">+ Agregar Producto</a>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchDetalles"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaDetalles">
+        <thead>
+            <tr>
+                <th>ID Pedido</th>
+                <th>Producto</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-center">Precio Unit.</th>
+                <th class="text-center">Subtotal</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in detalles %}
+            <tr>
+                <td><strong>#{{ d.pedido.id }}</strong></td>
+                <td>{{ d.producto.nombre_producto }}</td>
+                <td class="text-center">
+                    <span class="se-badge se-badge-neutral">{{ d.cantidad }}</span>
+                </td>
+                <td class="text-center">${{ d.precio_unitario_momento }}</td>
+                <td class="text-center"><strong>${{ d.subtotal }}</strong></td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'editar_detalle' d.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_detalle' d.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="6">No hay detalles registrados para ningún pedido.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchDetalles',
+        tableId: 'tablaDetalles',
+        filters: [
+            { type: 'text', label: '🔍 Pedido', placeholder: 'ID del pedido...', columns: [0] },
+            { type: 'text', label: 'Producto', placeholder: 'Nombre del producto...', columns: [1] },
+            { type: 'number_range', label: 'Cantidad', column: 2 },
+            { type: 'number_range', label: 'Precio Unit.', column: 3 },
+        ]
+    });
+});
+</script>
+{% endblock %}

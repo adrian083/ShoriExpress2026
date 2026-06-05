@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>Eliminar método de pago</h4>
+    </div>
+    <div class="se-confirm-body">
+        <p>¿Eliminar el método <strong>{{ metodo.nombre_metodo }}</strong>?</p>
+        {% if metodo.descripcion %}
+        <p class="text-muted small">{{ metodo.descripcion }}</p>
+        {% endif %}
+        <p class="text-muted small">Los recibos que ya lo usan conservan el historial; no podrás asignarlo a pagos nuevos.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Sí, eliminar</button>
+                <a href="{% url 'lista_metodos' %}" class="se-btn se-btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

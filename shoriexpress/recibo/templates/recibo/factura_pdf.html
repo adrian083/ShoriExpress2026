@@ -1,0 +1,610 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura {{ recibo.numero_recibo }} - Shori Express</title>
+    <style>
+        /* ============================================================
+           FACTURA PDF - SHORI EXPRESS
+           Diseño profesional, elegante y moderno
+           ============================================================ */
+        @page {
+            size: letter;
+            margin: 1.5cm 2cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1a1a1a;
+            font-size: 11px;
+            line-height: 1.5;
+            background: #ffffff;
+        }
+
+        /* ---------- HEADER ---------- */
+        .factura-header {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #DC2626;
+            padding-bottom: 20px;
+        }
+
+        .factura-header-left {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .factura-header-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .logo-container {
+            margin-bottom: 8px;
+        }
+
+        .logo-box {
+            display: inline-block;
+            background: #DC2626;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 900;
+            padding: 10px 16px;
+            border-radius: 8px;
+            letter-spacing: 1px;
+        }
+
+        .empresa-nombre {
+            font-size: 24px;
+            font-weight: 900;
+            color: #111111;
+            letter-spacing: -0.5px;
+            margin-top: 8px;
+        }
+
+        .empresa-slogan {
+            font-size: 10px;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+
+        .factura-titulo {
+            font-size: 32px;
+            font-weight: 900;
+            color: #DC2626;
+            letter-spacing: -1px;
+            margin-bottom: 6px;
+        }
+
+        .factura-numero {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111111;
+            background: #F3F4F6;
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .factura-fecha {
+            font-size: 10px;
+            color: #6B7280;
+            margin-top: 6px;
+        }
+
+        /* ---------- INFO BOXES ---------- */
+        .info-section {
+            display: table;
+            width: 100%;
+            margin-bottom: 28px;
+        }
+
+        .info-box {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding-right: 20px;
+        }
+
+        .info-box:last-child {
+            padding-right: 0;
+            padding-left: 20px;
+        }
+
+        .info-box-title {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #DC2626;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1.5px solid #F3F4F6;
+        }
+
+        .info-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .info-label {
+            display: table-cell;
+            width: 40%;
+            font-size: 9px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 3px 0;
+        }
+
+        .info-value {
+            display: table-cell;
+            width: 60%;
+            font-size: 10px;
+            font-weight: 500;
+            color: #111111;
+            padding: 3px 0;
+        }
+
+        /* ---------- ESTADO BADGE ---------- */
+        .estado-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .estado-completado {
+            background: #DCFCE7;
+            color: #16A34A;
+        }
+
+        .estado-pendiente {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .estado-reembolsado {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .estado-fallido {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        /* ---------- TABLA DE PRODUCTOS ---------- */
+        .tabla-productos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tabla-productos thead th {
+            background: #111111;
+            color: #ffffff;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 3px solid #DC2626;
+        }
+
+        .tabla-productos thead th:nth-child(2),
+        .tabla-productos thead th:nth-child(3),
+        .tabla-productos thead th:nth-child(4) {
+            text-align: right;
+        }
+
+        .tabla-productos tbody td {
+            padding: 11px 14px;
+            font-size: 10px;
+            border-bottom: 1px solid #F3F4F6;
+            color: #374151;
+        }
+
+        .tabla-productos tbody td:nth-child(2),
+        .tabla-productos tbody td:nth-child(3),
+        .tabla-productos tbody td:nth-child(4) {
+            text-align: right;
+        }
+
+        .tabla-productos tbody tr:nth-child(even) {
+            background: #FAFAFA;
+        }
+
+        .tabla-productos tbody tr:last-child td {
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .producto-nombre {
+            font-weight: 600;
+            color: #111111;
+        }
+
+        /* ---------- TOTALES ---------- */
+        .totales-section {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .totales-spacer {
+            display: table-cell;
+            width: 55%;
+        }
+
+        .totales-box {
+            display: table-cell;
+            width: 45%;
+            vertical-align: top;
+        }
+
+        .totales-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .totales-table tr td {
+            padding: 8px 14px;
+            font-size: 10px;
+        }
+
+        .totales-table tr td:first-child {
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-size: 9px;
+        }
+
+        .totales-table tr td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: #111111;
+        }
+
+        .totales-table .descuento td:last-child {
+            color: #DC2626;
+        }
+
+        .totales-table .total-final {
+            border-top: 2px solid #111111;
+        }
+
+        .totales-table .total-final td {
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .totales-table .total-final td:first-child {
+            font-size: 12px;
+            font-weight: 800;
+            color: #111111;
+        }
+
+        .totales-table .total-final td:last-child {
+            font-size: 18px;
+            font-weight: 900;
+            color: #DC2626;
+        }
+
+        /* ---------- FOOTER ---------- */
+        .factura-footer {
+            border-top: 2px solid #F3F4F6;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .footer-gracias {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .footer-gracias h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: #111111;
+            margin-bottom: 4px;
+        }
+
+        .footer-gracias p {
+            font-size: 10px;
+            color: #6B7280;
+        }
+
+        .footer-info {
+            display: table;
+            width: 100%;
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 14px 20px;
+        }
+
+        .footer-info-col {
+            display: table-cell;
+            width: 33.33%;
+            text-align: center;
+            font-size: 9px;
+            color: #6B7280;
+            vertical-align: top;
+        }
+
+        .footer-info-col strong {
+            display: block;
+            color: #111111;
+            font-size: 9px;
+            margin-bottom: 2px;
+        }
+
+        .footer-legal {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 8px;
+            color: #9CA3AF;
+            line-height: 1.6;
+        }
+
+        /* ---------- DECORATIVE LINE ---------- */
+        .accent-line {
+            height: 4px;
+            background: linear-gradient(90deg, #DC2626 0%, #111111 100%);
+            border-radius: 2px;
+            margin-bottom: 24px;
+        }
+
+        /* ---------- PRINT STYLES ---------- */
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* ---------- PRINT BUTTON (only visible in browser) ---------- */
+        .print-actions {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 10px;
+        }
+
+        .print-actions p {
+            font-size: 12px;
+            color: #6B7280;
+            margin-bottom: 10px;
+        }
+
+        .btn-print {
+            display: inline-block;
+            background: #DC2626;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 0 6px;
+        }
+
+        .btn-print:hover {
+            background: #B91C1C;
+        }
+
+        .btn-volver {
+            display: inline-block;
+            background: #111111;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 0 6px;
+        }
+
+        .btn-volver:hover {
+            background: #333333;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botones de acción (solo visibles en navegador, no en PDF) -->
+    <div class="print-actions no-print">
+        <p>💡 Si el PDF no se descargó automáticamente, puedes imprimirlo o guardarlo como PDF desde aquí:</p>
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+        <a class="btn-volver" href="javascript:history.back()">← Volver a Recibos</a>
+    </div>
+
+    <!-- Línea decorativa superior -->
+    <div class="accent-line"></div>
+
+    <!-- ============ HEADER ============ -->
+    <div class="factura-header">
+        <div class="factura-header-left">
+            <div class="logo-container">
+                <span class="logo-box">SE</span>
+            </div>
+            <div class="empresa-nombre">Shori Express</div>
+            <div class="empresa-slogan">Sistema de Gestión Empresarial</div>
+        </div>
+        <div class="factura-header-right">
+            <div class="factura-titulo">FACTURA</div>
+            <div class="factura-numero">N° {{ recibo.numero_recibo }}</div>
+            <div class="factura-fecha">
+                Fecha de emisión: {{ recibo.fecha_emision|date:"d/m/Y" }}<br>
+                Hora: {{ recibo.fecha_emision|date:"H:i" }} hrs
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ INFORMACIÓN ============ -->
+    <div class="info-section">
+        <div class="info-box">
+            <div class="info-box-title">📋 Datos del Cliente</div>
+            <div class="info-row">
+                <span class="info-label">Nombre</span>
+                <span class="info-value">{{ cliente.primer_nombre }} {{ cliente.apellido }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Documento</span>
+                <span class="info-value">{{ cliente.get_tipo_documento_display }} {{ cliente.documento }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Correo</span>
+                <span class="info-value">{{ cliente.correo }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Teléfono</span>
+                <span class="info-value">{{ cliente.telefono|default:"N/A" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Dirección</span>
+                <span class="info-value">{{ cliente.direccion }}</span>
+            </div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-title">🛒 Datos del Pedido</div>
+            <div class="info-row">
+                <span class="info-label">N° Pedido</span>
+                <span class="info-value">#{{ pedido.id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Tipo</span>
+                <span class="info-value">{{ pedido.get_tipo_pedido_display }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Dirección</span>
+                <span class="info-value">{{ pedido.direccion_pedido|default:"-" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Método Pago</span>
+                <span class="info-value">{{ metodo_pago.nombre_metodo }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Estado Pago</span>
+                <span class="info-value">
+                    <span class="estado-badge {% if recibo.estado_pago == 'completado' %}estado-completado{% elif recibo.estado_pago == 'pendiente' %}estado-pendiente{% elif recibo.estado_pago == 'reembolsado' %}estado-reembolsado{% else %}estado-fallido{% endif %}">
+                        {{ recibo.estado_pago|upper }}
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TABLA DE PRODUCTOS ============ -->
+    <table class="tabla-productos">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Producto</th>
+                <th style="width: 15%;">Cantidad</th>
+                <th style="width: 17%;">Precio Unit.</th>
+                <th style="width: 18%;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td><span class="producto-nombre">{{ item.producto }}</span></td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.precio_unitario|floatformat:2 }}</td>
+                <td><strong>${{ item.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #9CA3AF; padding: 24px; font-style: italic;">
+                    No hay detalles de productos disponibles para este pedido.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ============ TOTALES ============ -->
+    <div class="totales-section">
+        <div class="totales-spacer"></div>
+        <div class="totales-box">
+            <table class="totales-table">
+                <tr>
+                    <td>Subtotal</td>
+                    <td>${{ recibo.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% if recibo.descuento_puntos > 0 %}
+                <tr class="descuento">
+                    <td>Descuento (Puntos)</td>
+                    <td>- ${{ recibo.descuento_puntos|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-final">
+                    <td>TOTAL PAGADO</td>
+                    <td>${{ recibo.total_pagado|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============ FOOTER ============ -->
+    <div class="factura-footer">
+        <div class="footer-gracias">
+            <h3>¡Gracias por tu compra! 🎉</h3>
+            <p>Esperamos verte pronto en Shori Express</p>
+        </div>
+
+        <div class="footer-info">
+            <div class="footer-info-col">
+                <strong>📍 Dirección</strong>
+                Shori Express - Local Principal
+            </div>
+            <div class="footer-info-col">
+                <strong>📞 Contacto</strong>
+                <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f79e999198b7849f98859e928f8785928484d994989a">[email&#160;protected]</a>
+            </div>
+            <div class="footer-info-col">
+                <strong>🕐 Horario</strong>
+                Lun - Sáb: 8:00 AM - 9:00 PM
+            </div>
+        </div>
+
+        <div class="footer-legal">
+            Este documento es un comprobante de pago generado electrónicamente por Shori Express.<br>
+            Factura N° {{ recibo.numero_recibo }} — Emitida el {{ recibo.fecha_emision|date:"d/m/Y" }} a las {{ recibo.fecha_emision|date:"H:i" }} hrs.
+        </div>
+    </div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

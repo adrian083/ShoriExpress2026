@@ -1,0 +1,207 @@
+{% extends base_template %}
+{% load static %}
+
+{% block content %}
+
+<div class="se-page-header" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+    <h2 style="margin:0;">Mi Cuenta</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+    </div>
+</div>
+
+{% if mensaje_exito %}
+<div class="se-alert se-alert-success">✅ {{ mensaje_exito }}</div>
+{% endif %}
+{% if mensaje_error %}
+<div class="se-alert se-alert-error">❌ {{ mensaje_error }}</div>
+{% endif %}
+
+<!-- Encabezado de perfil -->
+<div class="se-account-header">
+    <div class="se-account-avatar">
+        {{ usuario.primer_nombre|first|upper }}{{ usuario.apellido|first|upper }}
+    </div>
+    <div class="se-account-info">
+        <h2>{{ usuario.primer_nombre }} {{ usuario.apellido }}</h2>
+        <p>@{{ usuario.nombre_usuario }} · {{ usuario.rol.nombre_rol }} · {{ usuario.estado|capfirst }}</p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="se-account-stats">
+    <div class="se-account-stat">
+        <div class="stat-value">⭐ {{ usuario.puntos_acumulados }}</div>
+        <div class="stat-label">Puntos Acumulados</div>
+    </div>
+    <div class="se-account-stat">
+        <div class="stat-value">🎫 {{ usuario.bonos_fidelidad }}</div>
+        <div class="stat-label">Bonos de fidelidad</div>
+        <div class="stat-label" style="font-size: 0.75rem; margin-top: 4px; opacity: 0.85;">1 bono por compras ≥ $50.000</div>
+    </div>
+    <div class="se-account-stat">
+        <div class="stat-value">{{ total_pedidos }}</div>
+        <div class="stat-label">Pedidos Realizados</div>
+    </div>
+    <div class="se-account-stat">
+        <div class="stat-value">🔑 {{ usuario.rol.nombre_rol }}</div>
+        <div class="stat-label">Rol Asignado</div>
+    </div>
+    <div class="se-account-stat">
+        <div class="stat-value">
+            <span class="se-badge {% if usuario.estado == 'activo' %}se-badge-success{% else %}se-badge-danger{% endif %}">
+                {{ usuario.estado|upper }}
+            </span>
+        </div>
+        <div class="stat-label">Estado de Cuenta</div>
+    </div>
+</div>
+
+<!-- Contacto y entrega (únicos datos que puedes editar tú mismo) -->
+<form method="POST" action="{% url 'mi_cuenta' usuario.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="seccion" value="info_personal">
+
+    <div class="se-account-section">
+        <div class="se-account-section-header">
+            📧 Contacto y dirección de entrega
+        </div>
+        <div class="se-account-section-body">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">
+                Aquí solo puedes actualizar <strong>correo</strong>, <strong>teléfono</strong> y <strong>dirección</strong>.
+                Para cambiar nombre, documento u otros datos, contacta al local.
+            </p>
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label">Correo electrónico</label>
+                    <input type="email" name="correo" class="se-form-control" value="{{ usuario.correo }}" required autocomplete="email">
+                </div>
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label">Teléfono</label>
+                    <input type="text" name="telefono" class="se-form-control" value="{{ usuario.telefono|default:'' }}" placeholder="Ej: 300 123 4567" autocomplete="tel">
+                </div>
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label">Dirección (domicilio / referencia)</label>
+                    <input type="text" name="direccion" class="se-form-control" value="{{ usuario.direccion }}" placeholder="Barrio, calle, número, torre/apto…" required autocomplete="street-address">
+                </div>
+            </div>
+            <div class="se-form-actions" style="margin-top: 16px;">
+                <button type="submit" class="se-btn se-btn-primary">💾 Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if not es_cliente %}
+<!-- Cambiar Contraseña -->
+<form method="POST" action="{% url 'mi_cuenta' usuario.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="seccion" value="cambiar_password">
+
+    <div class="se-account-section">
+        <div class="se-account-section-header">
+            🔒 Cambiar Contraseña
+        </div>
+        <div class="se-account-section-body">
+            <div class="se-form-grid">
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label">Contraseña Actual</label>
+                    <input type="password" name="password_actual" class="se-form-control" placeholder="••••••••" required>
+                </div>
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label">Nueva Contraseña</label>
+                    <input type="password" name="password_nueva" class="se-form-control" placeholder="••••••••" required>
+                </div>
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label">Confirmar Nueva Contraseña</label>
+                    <input type="password" name="password_confirmar" class="se-form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+            <div class="se-form-actions" style="margin-top: 16px;">
+                <button type="submit" class="se-btn se-btn-warning">🔑 Cambiar Contraseña</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% else %}
+<div class="se-account-section">
+    <div class="se-account-section-header">🔒 Contraseña y usuario</div>
+    <div class="se-account-section-body">
+        <div class="se-alert se-alert-info" style="margin:0;">
+            Si necesitas cambiar tu contraseña o tu nombre de usuario, escríbenos; por ahora solo puedes actualizar correo, teléfono y dirección arriba.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not es_cliente %}
+<!-- Cambiar Username -->
+<form method="POST" action="{% url 'mi_cuenta' usuario.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="seccion" value="cambiar_username">
+
+    <div class="se-account-section">
+        <div class="se-account-section-header">
+            🏷️ Nombre de Usuario
+        </div>
+        <div class="se-account-section-body">
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label">Username Actual</label>
+                    <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.nombre_usuario }}" disabled>
+                </div>
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label">Nuevo Username</label>
+                    <input type="text" name="nuevo_username" class="se-form-control" placeholder="Nuevo nombre de usuario" required>
+                </div>
+            </div>
+            <div class="se-form-actions" style="margin-top: 16px;">
+                <button type="submit" class="se-btn se-btn-primary se-btn-sm">Actualizar Username</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endif %}
+
+<!-- Datos personales y del sistema (solo lectura) -->
+<div class="se-account-section">
+    <div class="se-account-section-header">
+        ℹ️ Información del perfil <span style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">(solo lectura)</span>
+    </div>
+    <div class="se-account-section-body">
+        <div class="se-form-grid">
+            <div class="se-col-6 se-form-group">
+                <label class="se-form-label">Nombre</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.primer_nombre }}" disabled>
+            </div>
+            <div class="se-col-6 se-form-group">
+                <label class="se-form-label">Apellido</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.apellido }}" disabled>
+            </div>
+            <div class="se-col-3 se-form-group">
+                <label class="se-form-label">Tipo Documento</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.get_tipo_documento_display }}" disabled>
+            </div>
+            <div class="se-col-3 se-form-group">
+                <label class="se-form-label">N° Documento</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.documento }}" disabled>
+            </div>
+            <div class="se-col-3 se-form-group">
+                <label class="se-form-label">Rol</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.rol.nombre_rol }}" disabled>
+            </div>
+            <div class="se-col-3 se-form-group">
+                <label class="se-form-label">Puntos Acumulados</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.puntos_acumulados }}" disabled>
+            </div>
+            <div class="se-col-3 se-form-group">
+                <label class="se-form-label">Bonos de fidelidad</label>
+                <input type="text" class="se-form-control se-readonly-field" value="{{ usuario.bonos_fidelidad }}" disabled>
+            </div>
+        </div>
+        <div class="se-alert se-alert-info" style="margin-top: 12px;">
+            💡 Los campos de <strong>documento</strong>, <strong>rol</strong>, <strong>puntos</strong>, <strong>bonos</strong> y <strong>estado</strong> solo pueden ser modificados por un administrador desde el panel de gestión de usuarios.
+        </div>
+    </div>
+</div>
+{% endblock %}

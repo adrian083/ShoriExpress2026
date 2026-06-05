@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header" style="display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap:wrap;">
+  <div>
+    <h2 style="margin:0;">Carga masiva (CSV)</h2>
+    <p style="margin:6px 0 0; color: var(--text-secondary);">
+      Importa datos de forma rápida. Si un registro ya existe, se actualiza automáticamente.
+    </p>
+  </div>
+  <a href="{% url 'home' %}" class="se-btn se-btn-outline">← Volver al panel</a>
+</div>
+
+<div class="se-card" style="max-width: 900px;">
+  <div class="se-card-body">
+    <form method="POST" enctype="multipart/form-data" style="display:grid; grid-template-columns: 1fr 2fr; gap: 16px; align-items:end;">
+      {% csrf_token %}
+      <div class="se-form-group">
+        <label class="se-form-label">¿Qué quieres cargar?</label>
+        <select name="tipo" class="se-form-control" required>
+          <option value="inventario">Inventario (insumos)</option>
+          <option value="productos">Productos (menú)</option>
+        </select>
+      </div>
+
+      <div class="se-form-group">
+        <label class="se-form-label">Archivo CSV (UTF-8)</label>
+        <input type="file" name="archivo" class="se-form-control" accept=".csv,text/csv" required>
+        <div class="se-form-hint">
+          Puedes descargar y usar los archivos de ejemplo de los botones de abajo.
+        </div>
+      </div>
+
+      <div style="grid-column: 1 / -1; display:flex; gap: 10px; flex-wrap:wrap;">
+        <button type="submit" class="se-btn se-btn-success">⬆️ Cargar</button>
+        <a class="se-btn se-btn-outline" href="{% static 'docs/ejemplos/carga_inventario_ejemplo.csv' %}" download>Descargar ejemplo Inventario</a>
+        <a class="se-btn se-btn-outline" href="{% static 'docs/ejemplos/carga_productos_ejemplo.csv' %}" download>Descargar ejemplo Productos</a>
+        <a class="se-btn se-btn-outline" href="{% static 'docs/ejemplos/carga_productos_20_ejemplo.csv' %}" download>Descargar ejemplo Productos (20+)</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if resumen %}
+<div class="se-card" style="max-width: 900px; margin-top: 16px;">
+  <div class="se-card-header">
+    <h3 style="margin:0;">Resultado</h3>
+  </div>
+  <div class="se-card-body">
+    <div style="display:flex; gap: 24px; flex-wrap:wrap;">
+      <div><strong>Tipo</strong><br>{{ resumen.tipo }}</div>
+      <div><strong>Creados</strong><br>{{ resumen.creados }}</div>
+      <div><strong>Actualizados</strong><br>{{ resumen.actualizados }}</div>
+    </div>
+    {% if resumen.errores %}
+      <hr style="border-color: var(--border-color); margin: 14px 0;">
+      <strong>Errores (máx 50)</strong>
+      <pre style="white-space: pre-wrap; background: var(--bg-table-row-alt); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-top: 8px;">{% for e in resumen.errores %}{{ e }}
+{% endfor %}</pre>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

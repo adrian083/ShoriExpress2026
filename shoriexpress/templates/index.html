@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-hero">
+    <h1>Bienvenido a <span>Shori Express</span></h1>
+    <p>Aquí puedes revisar cómo va el negocio: ventas, pedidos, inventario y actividad reciente.</p>
+</div>
+
+<div id="pedidoAlert" class="se-alert se-alert-warning" style="display:none; margin-bottom: 16px;">
+    <strong>Nuevo pedido</strong>: <span id="pedidoAlertText">Se registró un nuevo pedido.</span>
+    <a href="{% url 'lista_pedidos' %}" class="se-btn se-btn-outline se-btn-sm" style="margin-left: 8px;">Ver pedidos</a>
+</div>
+
+<div class="se-card mt-2" style="margin-bottom: 24px;">
+    <div class="se-card-body" style="padding: 16px 24px;">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">📅 Elige el período a consultar:</span>
+            <div class="se-form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <label class="se-form-label" style="margin: 0; white-space: nowrap;">Desde</label>
+                <input type="date" id="filtroFechaInicio" class="se-form-control" style="width: auto; padding: 8px 12px; font-size: 0.85rem;">
+            </div>
+            <div class="se-form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <label class="se-form-label" style="margin: 0; white-space: nowrap;">Hasta</label>
+                <input type="date" id="filtroFechaFin" class="se-form-control" style="width: auto; padding: 8px 12px; font-size: 0.85rem;">
+            </div>
+            <button onclick="cargarDashboard()" class="se-btn se-btn-primary se-btn-sm">Aplicar</button>
+            <button onclick="resetFiltros()" class="se-btn se-btn-outline se-btn-sm">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+<div class="se-dashboard-grid" id="kpiGrid">
+    <div class="se-dash-card" id="kpi-ventas">
+        <div class="dash-icon">💰</div>
+        <h3 id="kpiTotalVentas">$0</h3>
+        <p>Ventas del período</p>
+        <span class="se-badge se-badge-success">Entregados</span>
+    </div>
+    <div class="se-dash-card" id="kpi-pedidos">
+        <div class="dash-icon">🛒</div>
+        <h3 id="kpiTotalPedidos">0</h3>
+        <p>Pedidos del período</p>
+        <a href="{% url 'lista_pedidos' %}" class="se-btn se-btn-outline-red se-btn-sm mt-1">Ver Pedidos</a>
+    </div>
+    <div class="se-dash-card" id="kpi-hoy">
+        <div class="dash-icon">📋</div>
+        <h3 id="kpiPedidosHoy">0</h3>
+        <p>Pedidos de hoy</p>
+        <span class="se-badge se-badge-info">Hoy</span>
+    </div>
+    <div class="se-dash-card" id="kpi-pendientes">
+        <div class="dash-icon">⏳</div>
+        <h3 id="kpiPendientes">0</h3>
+        <p>Pedidos por atender</p>
+        <span class="se-badge se-badge-warning">Pendiente</span>
+    </div>
+    <div class="se-dash-card" id="kpi-recibos">
+        <div class="dash-icon">🧾</div>
+        <h3 id="kpiRecibos">$0</h3>
+        <p>Total cobrado</p>
+        <a href="{% url 'lista_recibos' %}" class="se-btn se-btn-outline-red se-btn-sm mt-1">Ver Recibos</a>
+    </div>
+    <div class="se-dash-card" id="kpi-usuarios">
+        <div class="dash-icon">👥</div>
+        <h3 id="kpiUsuarios">0</h3>
+        <p>Usuarios Activos</p>
+        <a href="{% url 'lista_usuarios' %}" class="se-btn se-btn-outline-red se-btn-sm mt-1">Ver Usuarios</a>
+    </div>
+    <div class="se-dash-card" id="kpi-stock">
+        <div class="dash-icon">⚠️</div>
+        <h3 id="kpiStockBajo">0</h3>
+        <p>Insumos con poco stock</p>
+        <a href="{% url 'lista_inventario' %}" class="se-btn se-btn-outline-red se-btn-sm mt-1">Ver Inventario</a>
+    </div>
+    <div class="se-dash-card" id="kpi-productos">
+        <div class="dash-icon">🍔</div>
+        <h3 id="kpiProductos">0</h3>
+        <p>Productos activos</p>
+        <a href="{% url 'lista_productos' %}" class="se-btn se-btn-outline-red se-btn-sm mt-1">Ver Productos</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px;">
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>📈 Ventas por día</h3>
+        </div>
+        <div class="se-card-body">
+            <canvas id="chartVentasDia" height="260"></canvas>
+        </div>
+    </div>
+
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>📊 Pedidos por estado</h3>
+        </div>
+        <div class="se-card-body" style="display: flex; justify-content: center;">
+            <canvas id="chartPedidosEstado" height="260" style="max-width: 320px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>🏆 Productos más vendidos</h3>
+        </div>
+        <div class="se-card-body">
+            <canvas id="chartProductosTop" height="260"></canvas>
+        </div>
+    </div>
+
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>🚗 Tipo de pedido</h3>
+        </div>
+        <div class="se-card-body" style="display: flex; justify-content: center;">
+            <canvas id="chartTipoPedido" height="260" style="max-width: 320px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>⚠️ Insumos con poco stock</h3>
+        </div>
+        <div class="se-card-body" style="padding: 0;">
+            <div class="se-table-wrapper" style="border: none; border-radius: 0;">
+                <table class="se-table" id="tablaInsumosCriticos">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="empty-row"><td colspan="3">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3>🔄 Movimientos recientes</h3>
+        </div>
+        <div class="se-card-body" style="padding: 0;">
+            <div class="se-table-wrapper" style="border: none; border-radius: 0;">
+                <table class="se-table" id="tablaMovimientos">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Insumo</th>
+                            <th class="text-center">Cantidad</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="empty-row"><td colspan="4">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="se-dashboard-grid" style="margin-top: 28px;">
+    <div class="se-dash-card">
+        <div class="dash-icon">🔑</div>
+        <h3>Roles</h3>
+        <p>Gestiona roles del sistema.</p>
+        <a href="{% url 'lista_roles' %}" class="se-btn se-btn-primary se-btn-sm">Ir a Roles</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">📋</div>
+        <h3>Recetas</h3>
+        <p>Fichas técnicas de preparación.</p>
+        <a href="{% url 'lista_recetas' %}" class="se-btn se-btn-primary se-btn-sm">Ver Recetas</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">🔄</div>
+        <h3>Movimientos</h3>
+        <p>Entradas y salidas de inventario.</p>
+        <a href="{% url 'lista_movimientos' %}" class="se-btn se-btn-primary se-btn-sm">Ver Movimientos</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">💳</div>
+        <h3>Métodos de Pago</h3>
+        <p>Administra formas de pago.</p>
+        <a href="{% url 'lista_metodos' %}" class="se-btn se-btn-primary se-btn-sm">Ver Métodos</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{% static 'JS/dashboard.js' %}"></script>
+{% endblock %}

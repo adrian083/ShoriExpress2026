@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>¿Eliminar registro de movimiento?</h4>
+    </div>
+    <div class="se-confirm-body">
+        <p>Se borrará el registro del movimiento de <strong>{{ movimiento.insumo.nombre_insumo }}</strong>.</p>
+        <p class="text-muted small">El stock del insumo se <strong>revertirá</strong> según el tipo (entradas se restan, salidas se suman de vuelta). Los movimientos de tipo «Ajuste» no se pueden eliminar desde el panel.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Eliminar Registro</button>
+                <a href="{% url 'lista_movimientos' %}" class="se-btn se-btn-outline">Regresar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

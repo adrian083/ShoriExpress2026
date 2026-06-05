@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if usuario %}Editar{% else %}Registrar{% endif %} Usuario</h3>
+        <p class="se-form-subtitle">Completa la información personal y de acceso del usuario.</p>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="usuarioForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="tipo_doc">Tipo Doc. *</label>
+                    <select name="tipo_doc" id="tipo_doc" class="se-form-control" required>
+                        <option value="CC" {% if usuario.tipo_documento == 'CC' %}selected{% endif %}>Cédula de Ciudadanía</option>
+                        <option value="TI" {% if usuario.tipo_documento == 'TI' %}selected{% endif %}>Tarjeta de Identidad</option>
+                        <option value="CE" {% if usuario.tipo_documento == 'CE' %}selected{% endif %}>Cédula de Extranjería</option>
+                        <option value="PEP" {% if usuario.tipo_documento == 'PEP' %}selected{% endif %}>Permiso Especial de Permanencia</option>
+                    </select>
+                </div>
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="documento">Número Documento *</label>
+                    <input type="text" id="documento" name="documento" class="se-form-control" 
+                           value="{{ usuario.documento|default:'' }}" required pattern="[0-9]+" title="Solo números">
+                </div>
+                <div class="se-col-5 se-form-group">
+                    <label class="se-form-label" for="correo">Correo Electrónico *</label>
+                    <input type="email" id="correo" name="correo" class="se-form-control" 
+                           value="{{ usuario.correo|default:'' }}" required placeholder="usuario@ejemplo.com">
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="nombre">Primer Nombre *</label>
+                    <input type="text" id="nombre" name="nombre" class="se-form-control" 
+                           value="{{ usuario.primer_nombre|default:'' }}" required>
+                </div>
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="apellido">Apellido *</label>
+                    <input type="text" id="apellido" name="apellido" class="se-form-control" 
+                           value="{{ usuario.apellido|default:'' }}" required>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="username">Username (Login) *</label>
+                    <input type="text" id="username" name="username" class="se-form-control" 
+                           value="{{ usuario.nombre_usuario|default:'' }}" required autocomplete="username">
+                </div>
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="pass">Contraseña {% if not usuario %}*{% else %}(opcional){% endif %}</label>
+                    <div style="position: relative;">
+                        <input type="password" id="pass" name="pass" class="se-form-control"
+                               {% if not usuario %}required{% endif %} autocomplete="new-password"
+                               placeholder="{% if usuario %}Dejar en blanco para mantener{% else %}Mínimo 8 caracteres{% endif %}">
+                        <small class="se-form-hint">{% if usuario %}Solo completa este campo si deseas cambiar la contraseña.{% else %}Mínimo 8 caracteres.{% endif %}</small>
+                    </div>
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="telefono">Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono" class="se-form-control" 
+                           value="{{ usuario.telefono|default:'' }}" placeholder="300 123 4567">
+                </div>
+                <div class="se-col-8 se-form-group">
+                    <label class="se-form-label" for="direccion">Dirección Residencial</label>
+                    <input type="text" id="direccion" name="direccion" class="se-form-control" 
+                           value="{{ usuario.direccion|default:'' }}">
+                </div>
+
+                <div class="se-col-12">
+                    <hr class="se-form-divider" style="margin: 1rem 0; opacity: 0.1;">
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="id_rol">Rol de Usuario *</label>
+                    <select name="id_rol" id="id_rol" class="se-form-control" required>
+                        <option value="">Seleccione rol...</option>
+                        {% for r in roles %}
+                        <option value="{{ r.id }}" {% if usuario.rol.id == r.id %}selected{% endif %}>
+                            {{ r.nombre_rol }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="estado">Estado de Cuenta</label>
+                    <select name="estado" id="estado" class="se-form-control">
+                        <option value="activo" {% if usuario.estado == 'activo' %}selected{% endif %}>✅ Activo</option>
+                        <option value="inactivo" {% if usuario.estado == 'inactivo' %}selected{% endif %}>🚫 Inactivo</option>
+                    </select>
+                </div>
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="puntos">Puntos Acumulados</label>
+                    <input type="number" id="puntos" name="puntos" class="se-form-control" 
+                           value="{{ usuario.puntos_acumulados|default:0 }}" min="0">
+                </div>
+            </div>
+
+            <div class="se-form-actions">
+                <a href="{% url 'lista_usuarios' %}" class="se-btn se-btn-outline">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success se-btn-lg">
+                    {% if usuario %}Actualizar Usuario{% else %}Crear Usuario{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('usuarioForm').addEventListener('submit', function(e) {
+        const isEdit = {% if usuario %}true{% else %}false{% endif %};
+        const password = document.getElementById('pass').value;
+        if (!isEdit && password.length < 8) {
+            alert("La contraseña debe tener al menos 8 caracteres.");
+            e.preventDefault();
+            return;
+        }
+        if (isEdit && password.length > 0 && password.length < 8) {
+            alert("La nueva contraseña debe tener al menos 8 caracteres.");
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Inventario - Shori Express</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
+        .header { border-bottom: 2px solid #DC2626; margin-bottom: 14px; padding-bottom: 8px; }
+        .title { font-size: 20px; font-weight: 700; color: #DC2626; }
+        .meta { font-size: 10px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 6px; }
+        th { background: #111; color: #fff; font-size: 10px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Reporte de Inventario</div>
+        <div class="meta">Shori Express | Generado: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Insumo</th>
+                <th>Categoría</th>
+                <th>Unidad</th>
+                <th>Stock Actual</th>
+                <th>Stock Mínimo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in insumos %}
+            <tr>
+                <td>{{ i.nombre_insumo }}</td>
+                <td>{{ i.categoria_insumo }}</td>
+                <td>{{ i.get_unidad_medida_display }}</td>
+                <td>{{ i.stock_actual }}</td>
+                <td>{{ i.stock_minimo }}</td>
+                <td>{{ i.get_estado_insumo_display }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No hay datos de inventario.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

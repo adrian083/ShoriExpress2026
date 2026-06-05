@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Movimientos de Inventario</h2>
+    <a href="{% url 'crear_movimiento' %}" class="se-btn se-btn-primary">+ Nuevo Registro</a>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchMovimientos"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaMovimientos">
+        <thead>
+            <tr>
+                <th>Insumo</th>
+                <th class="text-center">Tipo</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-center">Vencimiento</th>
+                <th>Responsable</th>
+                <th>Observaciones</th>
+                <th>Fecha</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in movimientos %}
+            <tr>
+                <td><strong>{{ m.insumo.nombre_insumo }}</strong></td>
+                <td class="text-center">
+                    <span class="se-badge {% if m.tipo_movimiento == 'entrada' %}se-badge-success{% elif m.tipo_movimiento == 'ajuste' %}se-badge-info{% else %}se-badge-danger{% endif %}">
+                        {{ m.get_tipo_movimiento_display }}
+                    </span>
+                </td>
+                <td class="text-center">{{ m.cantidad }} {{ m.insumo.get_unidad_medida_display }}</td>
+                <td class="text-center">{{ m.fecha_vencimiento|date:"Y-m-d"|default:"-" }}</td>
+                <td>{{ m.usuario.primer_nombre }} {{ m.usuario.apellido }}</td>
+                <td>{{ m.observaciones|default:"-" }}</td>
+                <td>{{ m.fecha_movimiento|date:"Y-m-d H:i" }}</td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'editar_movimiento' m.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_movimiento' m.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="8">No se encontraron movimientos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchMovimientos',
+        tableId: 'tablaMovimientos',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Insumo, responsable...', columns: [0, 4, 5] },
+            { type: 'select', label: 'Tipo', column: 1, options: [
+                { value: 'entrada por compra', label: 'Entrada por Compra' },
+                { value: 'entrada inicial', label: 'Entrada inicial' },
+                { value: 'salida por venta', label: 'Salida por Venta' },
+                { value: 'desperdicio', label: 'Salida por Desperdicio' },
+                { value: 'ajuste de inventario', label: 'Ajuste' },
+            ]},
+            { type: 'number_range', label: 'Cantidad', column: 2 },
+            { type: 'date_range', label: 'Vencimiento', column: 3 },
+            { type: 'date_range', label: 'Fecha mov.', column: 6 },
+        ]
+    });
+});
+</script>
+{% endblock %}

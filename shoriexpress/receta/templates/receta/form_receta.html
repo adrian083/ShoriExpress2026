@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if receta %}Editar{% else %}Nueva{% endif %} Composición de Receta</h3>
+        {% if preselect_producto %}
+        <p style="color: var(--accent-green); font-size: 0.85rem; margin-top: 4px;">
+            🍔 Producto preseleccionado. Agrega los ingredientes necesarios.
+        </p>
+        {% endif %}
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="recetaForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="selectProducto">Seleccionar Producto *</label>
+                    <select name="id_producto" id="selectProducto" class="se-form-control" required>
+                        <option value="">--- Elija un producto ---</option>
+                        {% for p in productos %}
+                        <option value="{{ p.id }}"
+                            {% if receta.producto.id == p.id %}selected
+                            {% elif preselect_producto and p.id|stringformat:"d" == preselect_producto %}selected
+                            {% endif %}>
+                            {{ p.nombre_producto }} - ${{ p.precio_venta }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div style="margin-top: 8px;">
+                        <a href="{% url 'crear_producto' %}?from_receta=1"
+                           class="se-link-action" style="font-size: 0.82rem; color: var(--accent-blue, #3b82f6); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                           <span>➕ ¿No existe el producto? Créalo aquí</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="selectInsumo">Seleccionar Insumo (Materia Prima) *</label>
+                    <select name="id_insumo" id="selectInsumo" class="se-form-control" required>
+                        <option value="">--- Elija un insumo ---</option>
+                        {% for i in insumos %}
+                        <option value="{{ i.id }}" {% if receta.insumo.id == i.id %}selected{% endif %}>
+                            {{ i.nombre_insumo }} ({{ i.get_unidad_medida_display }} - Stock: {{ i.stock_actual }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div style="margin-top: 8px;">
+                        <a href="{% url 'crear_insumo' %}"
+                           class="se-link-action" style="font-size: 0.82rem; color: var(--accent-blue, #3b82f6); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                           <span>➕ ¿No existe el insumo? Créalo aquí</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="cantidad">Cantidad Requerida *</label>
+                    <input type="number" step="0.0001" id="cantidad" name="cantidad" class="se-form-control"
+                           value="{{ receta.cantidad_requerida|default:'' }}"
+                           placeholder="Ej: 0.5 (para 500g si el insumo está en KG)" required min="0.0001">
+                    <span class="se-form-hint">Usa decimales según la unidad de medida (ej: 0.125 para 125gr/ml).</span>
+                </div>
+
+                {% if not receta %}
+                <div class="se-col-12 se-form-group" style="
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 2px solid var(--accent-blue, #3b82f6);
+                    border-radius: var(--radius-lg);
+                    padding: 16px;
+                    margin-top: 8px;
+                ">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600;">
+                        <input type="checkbox" name="agregar_otro" value="1"
+                               {% if preselect_producto %}checked{% endif %}
+                               style="width: 18px; height: 18px; accent-color: var(--accent-blue, #3b82f6);">
+                        <span>🔄 Agregar otro ingrediente al mismo producto al terminar</span>
+                    </label>
+                    <p style="margin: 8px 0 0 30px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                        Mantiene seleccionado el producto actual para que puedas añadir toda la lista de ingredientes rápidamente.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 24px;">
+                <a href="{% url 'lista_recetas' %}" class="se-btn se-btn-outline">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if receta %}Actualizar{% else %}Guardar{% endif %} Ingrediente
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('recetaForm').addEventListener('submit', function(e) {
+        const cantidad = parseFloat(document.getElementById('cantidad').value);
+        
+        if (cantidad <= 0) {
+            alert("La cantidad requerida debe ser mayor a cero.");
+            e.preventDefault();
+            return;
+        }
+
+        // Validación de seguridad para cantidades sospechosamente altas
+        // Ejemplo: Si alguien pone 500 pensando en gramos pero el insumo es KG
+        if (cantidad > 100) {
+            const confirmar = confirm("Has ingresado una cantidad mayor a 100. ¿Estás seguro de que esta es la cantidad correcta para una sola unidad del producto?");
+            if (!confirmar) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+{% endblock %}

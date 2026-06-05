@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if movimiento %}Editar{% else %}Nuevo{% endif %} Movimiento de Inventario</h3>
+        {% if preselect_tipo == 'entrada' %}
+        <p style="color: var(--accent-green); font-size: 0.85rem; margin-top: 4px;">
+            📥 Registrando <strong>entrada</strong> de insumo. El stock se actualizará automáticamente.
+        </p>
+        {% elif preselect_tipo %}
+        <p style="color: var(--accent-red, #ef4444); font-size: 0.85rem; margin-top: 4px;">
+            📤 Registrando <strong>salida</strong> de insumo. El stock se descontará automáticamente.
+        </p>
+        {% endif %}
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="movimientoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="id_insumo">Insumo / Materia Prima *</label>
+                    <select name="id_insumo" id="id_insumo" class="se-form-control" required>
+                        <option value="">Seleccione el insumo...</option>
+                        {% for i in insumos %}
+                        <option value="{{ i.id }}"
+                            {% if movimiento and movimiento.insumo.id == i.id %}selected
+                            {% elif preselect_insumo and i.id|stringformat:"d" == preselect_insumo %}selected
+                            {% endif %}>
+                            {{ i.nombre_insumo }} (Stock Actual: {{ i.stock_actual }} {{ i.get_unidad_medida_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="id_usuario">Usuario responsable *</label>
+                    {% if usuario_sesion %}
+                    <input type="hidden" name="id_usuario" id="id_usuario" value="{{ usuario_sesion.id }}">
+                    <input type="text" class="se-form-control se-readonly-field" readonly
+                           value="{{ usuario_sesion.primer_nombre }} {{ usuario_sesion.apellido }}">
+                    <span class="se-form-hint">Tomado automáticamente de tu sesión en el panel.</span>
+                    {% else %}
+                    <select name="id_usuario" id="id_usuario" class="se-form-control" required>
+                        <option value="">Seleccione responsable...</option>
+                        {% for u in usuarios %}
+                        <option value="{{ u.id }}" {% if movimiento and movimiento.usuario.id == u.id %}selected{% endif %}>
+                            {{ u.primer_nombre }} {{ u.apellido }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="tipo_movimiento">Tipo de Movimiento *</label>
+                    <select name="tipo_movimiento" id="tipo_movimiento" class="se-form-control" required>
+                        <option value="entrada" {% if movimiento %}{% if movimiento.tipo_movimiento == 'entrada' %}selected{% endif %}{% elif preselect_tipo == 'entrada' %}selected{% endif %}>📥 Entrada por Compra</option>
+                        <option value="entrada_inicial" {% if movimiento and movimiento.tipo_movimiento == 'entrada_inicial' %}selected{% endif %}>🏁 Entrada inicial</option>
+                        <option value="salida_venta" {% if movimiento %}{% if movimiento.tipo_movimiento == 'salida_venta' %}selected{% endif %}{% elif preselect_tipo == 'salida_venta' %}selected{% endif %}>📤 Salida por Venta</option>
+                        <option value="salida_desperdicio" {% if movimiento %}{% if movimiento.tipo_movimiento == 'salida_desperdicio' %}selected{% endif %}{% elif preselect_tipo == 'salida_desperdicio' %}selected{% endif %}>🗑️ Salida por Desperdicio/Merma</option>
+                        <option value="ajuste" {% if movimiento %}{% if movimiento.tipo_movimiento == 'ajuste' %}selected{% endif %}{% elif preselect_tipo == 'ajuste' %}selected{% endif %}>⚖️ Ajuste de Inventario</option>
+                    </select>
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="cantidad">Cantidad *</label>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="se-form-control"
+                           value="{{ movimiento.cantidad|default:'' }}" required min="0.01" 
+                           title="La cantidad debe ser mayor a 0.">
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="lote">Lote</label>
+                    <input type="text" id="lote" name="lote" class="se-form-control"
+                           value="{{ movimiento.lote|default:'' }}"
+                           placeholder="Ej: LOT-2024-001" maxlength="50"
+                           pattern="[A-Za-z0-9-]+" title="Solo letras, números y guiones.">
+                </div>
+
+                <div class="se-col-4 se-form-group">
+                    <label class="se-form-label" for="fecha_vencimiento">Fecha de Vencimiento</label>
+                    <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="se-form-control"
+                           value="{{ movimiento.fecha_vencimiento|date:'Y-m-d' }}">
+                    <span class="se-form-hint">Opcional (perecederos).</span>
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" class="se-form-control" 
+                              rows="2" maxlength="255" placeholder="Motivo del ajuste o detalles del proveedor...">{{ movimiento.observaciones|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-card); border: 2px solid var(--accent-blue, #3b82f6); border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 16px; font-size: 0.85rem; color: var(--text-secondary);">
+                ℹ️ <strong>Impacto en Stock:</strong> Entradas suman, salidas restan y ajustes establecen el valor.
+            </div>
+
+            <div class="se-form-actions">
+                <a href="{% url 'lista_movimientos' %}" class="se-btn se-btn-outline se-btn-lg">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success se-btn-lg">Guardar Movimiento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('movimientoForm').addEventListener('submit', function(e) {
+        const fechaVenc = document.getElementById('fecha_vencimiento').value;
+        const hoy = new Date().toISOString().split('T')[0];
+        const cantidad = parseFloat(document.getElementById('cantidad').value);
+
+        // 1. Validar que la cantidad no sea cero
+        if (cantidad <= 0) {
+            alert("La cantidad del movimiento debe ser mayor a cero.");
+            e.preventDefault();
+            return;
+        }
+
+        // 2. Validar fecha de vencimiento (si se ingresó)
+        if (fechaVenc && fechaVenc < hoy) {
+            const confirmar = confirm("¡Atención! La fecha de vencimiento es anterior a hoy. ¿Deseas registrar este producto vencido?");
+            if (!confirmar) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if pedido %}Editar{% else %}Registrar Nuevo{% endif %} Pedido</h3>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="pedidoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="id_usuario">Cliente / Usuario *</label>
+                    <select name="id_usuario" id="id_usuario" class="se-form-control" required>
+                        <option value="">Seleccione el cliente...</option>
+                        {% for u in usuarios %}
+                        <option value="{{ u.id }}" {% if pedido.usuario.id == u.id %}selected{% endif %}>
+                            {{ u.primer_nombre }} {{ u.apellido }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="tipo_pedido">Tipo de Pedido *</label>
+                    <select name="tipo_pedido" id="tipo_pedido" class="se-form-control" required onchange="toggleDireccion()">
+                        <option value="local" {% if pedido.tipo_pedido == 'local' %}selected{% endif %}>Para comer aquí</option>
+                        <option value="llevar" {% if pedido.tipo_pedido == 'llevar' %}selected{% endif %}>Para llevar</option>
+                        <option value="domicilio" {% if pedido.tipo_pedido == 'domicilio' %}selected{% endif %}>Domicilio</option>
+                    </select>
+                </div>
+
+                <div class="se-col-12 se-form-group" id="group_direccion">
+                    <label class="se-form-label" for="direccion_pedido">Dirección de Entrega *</label>
+                    <input type="text" id="direccion_pedido" name="direccion_pedido" class="se-form-control"
+                           value="{{ pedido.direccion_pedido|default:'' }}" 
+                           placeholder="Calle, número, barrio o número de mesa"
+                           required minlength="5" maxlength="200">
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="estado_pedido">Estado del Pedido *</label>
+                    <select name="estado_pedido" id="estado_pedido" class="se-form-control">
+                        <option value="pendiente" {% if pedido.estado_pedido == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="preparacion" {% if pedido.estado_pedido == 'preparacion' %}selected{% endif %}>En Preparación</option>
+                        <option value="listo" {% if pedido.estado_pedido == 'listo' %}selected{% endif %}>Listo para Entrega</option>
+                        <option value="entregado" {% if pedido.estado_pedido == 'entregado' %}selected{% endif %}>Entregado</option>
+                        <option value="cancelado" {% if pedido.estado_pedido == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="total_pedido">Total del Pedido ($) *</label>
+                    <input type="number" step="0.01" id="total_pedido" name="total_pedido" class="se-form-control"
+                           value="{{ pedido.total_pedido|stringformat:".2f"|default:'0.00' }}"
+                           min="0" required>
+                </div>
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 24px;">
+                <a href="{% url 'lista_pedidos' %}" class="se-btn se-btn-outline se-btn-lg">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success se-btn-lg">
+                    {% if pedido %}Actualizar{% else %}Guardar{% endif %} Pedido
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleDireccion() {
+        const tipo = document.getElementById('tipo_pedido').value;
+        const inputDir = document.getElementById('direccion_pedido');
+        const labelDir = inputDir.previousElementSibling;
+
+        if (tipo === 'local') {
+            inputDir.placeholder = "Ej: Mesa 5 (Opcional)";
+            inputDir.required = false;
+            labelDir.innerHTML = "Referencia de Mesa";
+        } else if (tipo === 'domicilio') {
+            inputDir.placeholder = "Dirección completa del cliente";
+            inputDir.required = true;
+            labelDir.innerHTML = "Dirección de Entrega *";
+        } else {
+            inputDir.placeholder = "Referencia de entrega";
+            inputDir.required = false;
+            labelDir.innerHTML = "Dirección / Nota de entrega";
+        }
+    }
+
+    // Ejecutar al cargar para establecer estado inicial
+    document.addEventListener('DOMContentLoaded', toggleDireccion);
+
+    // Validación antes de enviar
+    document.getElementById('pedidoForm').addEventListener('submit', function(e) {
+        const total = parseFloat(document.getElementById('total_pedido').value);
+        if (total < 0) {
+            alert("El total no puede ser negativo.");
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

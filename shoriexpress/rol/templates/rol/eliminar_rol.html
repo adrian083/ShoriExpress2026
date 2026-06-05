@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>Confirmar Eliminación</h4>
+    </div>
+    <div class="se-confirm-body">
+        <p>¿Estás seguro de que deseas eliminar el rol <strong>"{{ rol.nombre_rol }}"</strong>?</p>
+        <p class="text-muted small">Esta acción no se puede deshacer.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Sí, Eliminar Definitivamente</button>
+                <a href="{% url 'lista_roles' %}" class="se-btn se-btn-outline">Cancelar y Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

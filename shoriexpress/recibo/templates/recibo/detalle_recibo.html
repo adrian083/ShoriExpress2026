@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <a href="{% url 'lista_recibos' %}" class="se-btn se-btn-outline se-btn-sm" style="padding: 8px 12px;">← Volver</a>
+        <h2>Detalle de Factura #{{ recibo.id }}</h2>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="{% url 'descargar_factura_pdf' recibo.id %}" class="se-btn se-btn-primary se-btn-sm">📄 Descargar PDF</a>
+        <a href="{% url 'editar_recibo' recibo.id %}" class="se-btn se-btn-warning se-btn-sm">✏️ Editar</a>
+        <a href="{% url 'eliminar_recibo' recibo.id %}" class="se-btn se-btn-danger se-btn-sm">🗑️ Eliminar</a>
+    </div>
+</div>
+
+<!-- CARD FACTURA PROFESIONAL -->
+<div class="factura-container" style="max-width: 900px; margin: 24px auto;">
+    
+    <!-- ENCABEZADO -->
+    <div class="factura-header" style="background: var(--bg-card); padding: 32px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: 2px solid var(--brand-red);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">FACTURA #</p>
+                <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--brand-red); margin: 0;">{{ recibo.id }}</h1>
+            </div>
+            <div style="text-align: right;">
+                <p style="color: var(--text-muted); font-size: 0.85rem;">FECHA DE EMISIÓN</p>
+                <p style="font-size: 1.1rem; font-weight: 600;">{{ recibo.fecha_emision|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase;">Cliente</p>
+                <p style="font-size: 1rem; font-weight: 600;">{{ cliente.primer_nombre }} {{ cliente.apellido }}</p>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">{{ cliente.documento }} · {{ cliente.correo }}</p>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">{{ cliente.telefono }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase;">Vendedor</p>
+                <p style="font-size: 1rem; font-weight: 600;">{{ vendedor.primer_nombre }} {{ vendedor.apellido }}</p>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">{{ vendedor.rol.nombre_rol }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CUERPO: TABLA DE ITEMS -->
+    <div class="factura-body" style="background: var(--bg-card); padding: 32px;">
+        <h3 style="color: var(--text-primary); margin-bottom: 16px; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Detalles de la Venta</h3>
+        
+        <div class="se-table-wrapper" style="overflow-x: auto;">
+            <table class="se-table" style="width: 100%; margin-bottom: 24px;">
+                <thead>
+                    <tr style="background: var(--bg-table-header);">
+                        <th style="text-align: left;">Producto</th>
+                        <th style="text-align: left;">Descripción</th>
+                        <th style="text-align: center;">Cant.</th>
+                        <th style="text-align: right;">P. Unitario</th>
+                        <th style="text-align: right;">Subtotal</th>
+                        <th style="text-align: center;">Stock Rem.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ detalle.producto.nombre_producto }}</td>
+                        <td style="font-size: 0.9rem; color: var(--text-secondary);">{{ detalle.producto.descripcion_producto|truncatewords:10 }}</td>
+                        <td style="text-align: center;">{{ detalle.cantidad }}</td>
+                        <td style="text-align: right;">${{ detalle.precio_unitario_momento|floatformat:2 }}</td>
+                        <td style="text-align: right; font-weight: 600;">${{ detalle.subtotal|floatformat:2 }}</td>
+                        <td style="text-align: center;">
+                            {% if detalle.stock_remanente_post_venta != None %}
+                                <span style="background: var(--color-info-bg); color: var(--color-info); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;">
+                                    {{ detalle.stock_remanente_post_venta }}
+                                </span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">--</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- NOTAS ESPECIALES (si existen) -->
+        {% for detalle in detalles %}
+            {% if detalle.notas_especiales %}
+                <div style="background: var(--color-warning-bg); border-left: 4px solid var(--color-warning); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+                    <p style="font-size: 0.9rem; margin: 0;"><strong>📝 {{ detalle.producto.nombre_producto }}:</strong> {{ detalle.notas_especiales }}</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- TOTALES Y MÉTODO DE PAGO -->
+    <div class="factura-footer" style="background: var(--bg-table-row-alt); padding: 32px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); border-top: 2px solid var(--border-color);">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 40px;">
+            
+            <!-- MÉTODO DE PAGO -->
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px; text-transform: uppercase;">Método de Pago</p>
+                <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <p style="font-size: 1rem; font-weight: 600; margin: 0;">{{ metodo_pago.nombre_metodo }}</p>
+                    {% if metodo_pago.descripcion %}
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 4px 0 0 0;">{{ metodo_pago.descripcion }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- DESGLOSE FINANCIERO -->
+            <div style="min-width: 280px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="text-muted">Subtotal</span>
+                    <span style="font-weight: 500;">${{ recibo.subtotal|floatformat:2 }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="text-muted">IVA ({{ config.porcentaje_iva }}%)</span>
+                    <span style="font-weight: 500;">${{ recibo.iva_total|floatformat:2 }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; background: var(--brand-red-light); border-radius: var(--radius-md); padding: 16px; margin-top: 12px;">
+                    <span style="font-weight: 700; font-size: 1.1rem;">TOTAL PAGADO</span>
+                    <span style="font-weight: 800; font-size: 1.5rem; color: var(--brand-red);">${{ recibo.total_pagado|floatformat:2 }}</span>
+                </div>
+                
+                <!-- BONOS GANADOS -->
+                {% if recibo.puntos_ganados > 0 %}
+                    <div style="margin-top: 16px; background: var(--color-success-bg); border-left: 4px solid var(--color-success); padding: 12px; border-radius: var(--radius-sm);">
+                        <p style="margin: 0; font-weight: 600; color: var(--color-success);">🎁 Bonos Ganados: {{ recibo.puntos_ganados }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- INFORMACIÓN ADICIONAL -->
+    <div style="margin-top: 24px; padding: 16px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; font-size: 0.9rem;">
+            <div>
+                <p style="color: var(--text-muted); margin: 0;">Tipo de Pedido</p>
+                <p style="font-weight: 600; margin: 4px 0 0 0;">{{ pedido.get_tipo_pedido_display }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); margin: 0;">Estado del Pedido</p>
+                <p style="font-weight: 600; margin: 4px 0 0 0;">{{ pedido.get_estado_pedido_display }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); margin: 0;">Referencia</p>
+                <p style="font-weight: 600; margin: 4px 0 0 0;">Pedido #{{ pedido.id }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.factura-container {
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.factura-header,
+.factura-body,
+.factura-footer {
+    transition: var(--transition);
+}
+
+@media print {
+    .se-page-header {
+        display: none !important;
+    }
+    .factura-container {
+        box-shadow: none;
+        max-width: 100%;
+    }
+}
+</style>
+
+{% endblock %}

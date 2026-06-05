@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load producto_tags %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if producto %}Editar{% else %}Crear{% endif %} Producto</h3>
+        {% if from_receta %}
+        <p style="color: var(--accent-green); font-size: 0.85rem; margin-top: 4px;">
+            📋 Viniste desde Recetas. Al guardar podrás asignar ingredientes directamente.
+        </p>
+        {% endif %}
+    </div>
+    <div class="se-form-body">
+        <form method="POST" enctype="multipart/form-data" id="productoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="nombre">Nombre del Producto *</label>
+                    <input type="text" id="nombre" name="nombre" class="se-form-control" 
+                           value="{{ producto.nombre_producto|default:'' }}" 
+                           placeholder="Ej: Choripán Especial" required minlength="3" maxlength="100">
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="descripcion">Descripción *</label>
+                    <textarea id="descripcion" name="descripcion" class="se-form-control" 
+                              rows="3" required placeholder="Describe los ingredientes principales o el tamaño..."
+                              maxlength="500">{{ producto.descripcion_producto|default:'' }}</textarea>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="precio">Precio de Venta ($) *</label>
+                    <input type="number" step="0.01" id="precio" name="precio" class="se-form-control" 
+                           value="{{ producto.precio_venta|default:'' }}" placeholder="Ej: 15000" 
+                           required min="0">
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="registro_movimiento_inicial">Registro de movimiento inicial (opcional)</label>
+                    <textarea id="registro_movimiento_inicial" name="registro_movimiento_inicial" class="se-form-control" rows="2" maxlength="500" placeholder="Ej: Lote de prueba, proveedor, nota de abastecimiento al dar de alta el plato...">{{ producto.registro_movimiento_inicial|default:'' }}</textarea>
+                    <span class="se-form-hint">Campo de auditoría: qué quedó registrado del primer abastecimiento o alta del producto.</span>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="imagenInput">Imagen del Producto (archivo)</label>
+                    <input type="file" name="imagen" id="imagenInput" class="se-form-control" 
+                           accept="image/png, image/jpeg, image/webp" onchange="previsualizarArchivo()">
+                    <span class="se-form-hint">Formatos: JPG, PNG o WebP. Máximo 2MB. Si no subes archivo, puedes escribir el nombre de la imagen en el campo de abajo.</span>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="imagen_catalogo">Nombre de imagen guardada (opcional)</label>
+                    <input type="text" name="imagen_catalogo" id="imagen_catalogo" class="se-form-control"
+                           value="{{ producto.imagen_catalogo|default:'' }}"
+                           placeholder="ej. productos/perro-clasico.jpg"
+                           maxlength="255" autocomplete="off">
+                    <span class="se-form-hint">Escribe el nombre del archivo de imagen (por ejemplo: <code>productos/perro-clasico.jpg</code>). También puedes dejarlo vacío y el sistema intentará encontrar una imagen automáticamente por nombre.</span>
+                </div>
+
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label">Vista Previa</label>
+                    <div id="imagenPreview" style="
+                        border: 2px dashed var(--border-color);
+                        border-radius: var(--radius-lg);
+                        padding: 16px;
+                        text-align: center;
+                        min-height: 200px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: var(--bg-main);
+                        overflow: hidden;
+                    ">
+                        {% if producto %}
+                        <img src="{{ producto|producto_imagen_url }}" alt="Vista previa catálogo" id="imgActual"
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: contain; box-shadow: var(--shadow-sm);"
+                             onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
+                        {% else %}
+                        <div id="placeholderPreview" style="color: var(--text-muted);">
+                            <div style="font-size: 2.5rem;">🖼️</div>
+                            <p style="margin: 8px 0 0;">Guarda el producto para ver vista previa (estática o subida)</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if not producto %}
+                <div class="se-col-12 se-form-group" style="
+                    background: rgba(34, 197, 94, 0.1);
+                    border: 1px solid var(--accent-green, #22c55e);
+                    border-radius: var(--radius-lg);
+                    padding: 16px;
+                    margin-top: 8px;
+                ">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; color: var(--text-main);">
+                        <input type="checkbox" name="crear_receta_despues" value="1"
+                               {% if from_receta %}checked{% endif %}
+                               style="width: 18px; height: 18px; accent-color: var(--accent-green, #22c55e);">
+                        <span>📋 Crear receta (asignar ingredientes) después de guardar</span>
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="se-form-actions">
+                <a href="{% url 'lista_productos' %}" class="se-btn se-btn-outline">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if producto %}Guardar Cambios{% else %}Crear Producto{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function previsualizarArchivo() {
+    const fileInput = document.getElementById('imagenInput');
+    const container = document.getElementById('imagenPreview');
+    const file = fileInput.files[0];
+
+    if (file && file.size > 2097152) {
+        alert("La imagen es demasiado pesada (máximo 2MB). Por favor, elige una más pequeña.");
+        fileInput.value = "";
+        return;
+    }
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            container.innerHTML = `
+                <img src="${e.target.result}" 
+                     style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: contain; box-shadow: var(--shadow-md);">
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        container.innerHTML = `
+            <div style="color: var(--text-muted);">
+                <div style="font-size: 2.5rem;">🖼️</div>
+                <p style="margin: 8px 0 0;">Selecciona un archivo para ver la vista previa</p>
+            </div>
+        `;
+    }
+}
+
+document.getElementById('productoForm').addEventListener('submit', function(e) {
+    const precio = parseFloat(document.getElementById('precio').value);
+    if (precio <= 0) {
+        if (!confirm("El precio es $0. ¿Estás seguro de que este producto es gratuito?")) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

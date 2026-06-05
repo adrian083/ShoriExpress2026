@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña - Shori Express</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+</head>
+<body class="landing-body">
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-branding">
+            <a href="{% url 'landing' %}" class="auth-brand-link">
+                <span class="brand-icon" style="width:48px;height:48px;font-size:1.1rem;">SE</span>
+                <h1>Shori Express</h1>
+            </a>
+            <p>Renueva tu contraseña si olvidaste tu acceso. Confirma tu documento y correo para continuar.</p>
+        </div>
+
+        <div class="auth-form-section">
+            <div class="auth-form-card">
+                <h2>Recuperar contraseña</h2>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" class="auth-form">
+                    {% csrf_token %}
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="documento">Documento</label>
+                        <input type="text" id="documento" name="documento" class="se-form-control" required>
+                    </div>
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="correo">Correo electrónico</label>
+                        <input type="email" id="correo" name="correo" class="se-form-control" required>
+                    </div>
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="nueva_contrasena">Nueva contraseña</label>
+                        <input type="password" id="nueva_contrasena" name="nueva_contrasena" class="se-form-control" minlength="8" required>
+                    </div>
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="confirmar_contrasena">Confirmar contraseña</label>
+                        <input type="password" id="confirmar_contrasena" name="confirmar_contrasena" class="se-form-control" minlength="8" required>
+                    </div>
+
+                    <button type="submit" class="se-btn se-btn-primary se-btn-lg" style="width:100%; margin-top: 8px;">Actualizar contraseña</button>
+                </form>
+
+                <div class="auth-footer">
+                    <a href="{% url 'login' %}" class="auth-back-link">← Volver a iniciar sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

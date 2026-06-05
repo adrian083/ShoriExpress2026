@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>¿Quitar ingrediente de la receta?</h4>
+    </div>
+    <div class="se-confirm-body">
+        <p>Se eliminará el insumo <strong>{{ receta.insumo.nombre_insumo }}</strong> de la preparación de <strong>{{ receta.producto.nombre_producto }}</strong>.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Sí, Eliminar</button>
+                <a href="{% url 'lista_recetas' %}" class="se-btn se-btn-outline">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

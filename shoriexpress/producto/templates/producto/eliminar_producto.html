@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>¿Eliminar Producto?</h4>
+    </div>
+    <div class="se-confirm-body">
+        <p>Estás a punto de borrar <strong>"{{ producto.nombre_producto }}"</strong>.</p>
+        <p class="text-muted small">Esta acción quitará el producto del menú.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Confirmar Eliminación</button>
+                <a href="{% url 'lista_productos' %}" class="se-btn se-btn-outline">Volver atrás</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

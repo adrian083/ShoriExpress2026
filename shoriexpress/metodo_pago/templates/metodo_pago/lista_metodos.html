@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Métodos de Pago</h2>
+    <a href="{% url 'crear_metodo' %}" class="se-btn se-btn-primary">+ Nuevo Método</a>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchMetodos"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaMetodos">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre del Método</th>
+                <th>Descripción</th>
+                <th class="text-center">Activo</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in metodos %}
+            <tr>
+                <td><strong>#{{ m.id }}</strong></td>
+                <td>{{ m.nombre_metodo }}</td>
+                <td>{{ m.descripcion|default:"—" }}</td>
+                <td class="text-center">
+                    {% if m.esta_activo %}
+                    <span class="se-badge se-badge-success">Sí</span>
+                    {% else %}
+                    <span class="se-badge se-badge-neutral">No</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'editar_metodo' m.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_metodo' m.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="5">No hay métodos de pago registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchMetodos',
+        tableId: 'tablaMetodos',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Nombre del método...', columns: [1, 2] },
+            { type: 'select', label: 'Activo', column: 3, options: [
+                { value: 'sí', label: 'Sí' },
+                { value: 'no', label: 'No' },
+            ]},
+        ]
+    });
+});
+</script>
+{% endblock %}

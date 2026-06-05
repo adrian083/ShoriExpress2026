@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Pedidos - Shori Express</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 10px; color: #111; }
+        .header { border-bottom: 2px solid #DC2626; margin-bottom: 12px; padding-bottom: 8px; }
+        .title { font-size: 20px; font-weight: 700; color: #DC2626; }
+        .meta { font-size: 10px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #ddd; padding: 5px; }
+        th { background: #111; color: #fff; font-size: 9px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Reporte de Pedidos</div>
+        <div class="meta">Shori Express | Generado: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pedidos %}
+            <tr>
+                <td>#{{ p.id }}</td>
+                <td>{{ p.usuario.primer_nombre }} {{ p.usuario.apellido }}</td>
+                <td>{{ p.get_tipo_pedido_display }}</td>
+                <td>{{ p.get_estado_pedido_display }}</td>
+                <td>${{ p.total_pedido }}</td>
+                <td>{{ p.fecha_pedido|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No hay pedidos para reportar.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

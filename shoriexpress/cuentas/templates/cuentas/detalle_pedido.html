@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shori Express - Pedido #{{ pedido.pk }}</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+    <style>
+        /* Ajustes específicos para que el detalle se vea impecable */
+        .se-detail-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .se-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: var(--bg-table-row-alt);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+        .se-total-card {
+            background: var(--bg-table-header);
+            color: var(--text-on-dark);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-top: 24px;
+            border-left: 5px solid var(--brand-red);
+        }
+        /* Forzamos que los textos en las tarjetas sean siempre visibles según el tema */
+        .se-card-body h4, .se-card-body p, .se-card-body td {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+    {% include "cuentas/_client_navbar.html" with show_nav_links=True scrolled=False %}
+
+<body>
+
+
+    <main class="se-main" style="margin-left: 0; max-width: 1000px; padding-top: 40px;">
+        
+        <div class="se-detail-container">
+            <div class="se-page-header">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline se-btn-sm">
+                        ← Volver
+                    </a>
+                    {% if usuario_logueado %}
+                    <a href="{% url 'mi_cuenta' usuario_logueado.id %}" class="se-btn se-btn-outline se-btn-sm">Mis datos</a>
+                    {% endif %}
+                    <h2>Detalle del <span>Pedido #{{ pedido.pk }}</span></h2>
+                </div>
+                <span class="se-badge {% if pedido.estado_pedido == 'entregado' %}se-badge-success{% else %}se-badge-warning{% endif %}">
+                    {{ pedido.get_estado_pedido_display }}
+                </span>
+            </div>
+
+            <div class="se-card">
+                <div class="se-card-header">
+                    <h3>📦 Información de Entrega</h3>
+                    <span class="text-muted small">{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                <div class="se-card-body">
+                    {% if pedido.fecha_entrega_estimada %}
+                    <div class="se-info-grid" style="margin-bottom: 16px;">
+                        <div class="se-form-group">
+                            <label class="se-form-label">Entrega estimada</label>
+                            <p class="fw-semibold">{{ pedido.fecha_entrega_estimada|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        {% if pedido.fecha_entrega_real %}
+                        <div class="se-form-group">
+                            <label class="se-form-label">Entrega real</label>
+                            <p class="fw-semibold">{{ pedido.fecha_entrega_real|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="se-info-grid">
+                        <div class="se-form-group">
+                            <label class="se-form-label">Cliente</label>
+                            <p class="fw-semibold">{{ usuario_logueado.primer_nombre }} {{ usuario_logueado.apellido }}</p>
+                        </div>
+                        <div class="se-form-group">
+                            <label class="se-form-label">Dirección</label>
+                            <p class="fw-semibold">{{ usuario_logueado.direccion }}</p>
+                        </div>
+                        <div class="se-form-group">
+                            <label class="se-form-label">Teléfono</label>
+                            <p class="fw-semibold">{{ usuario_logueado.telefono|default:"N/A" }}</p>
+                        </div>
+                    </div>
+
+                    <h3 class="mt-3 mb-2" style="font-size: 1.1rem; border-left: 3px solid var(--brand-red); padding-left: 10px;">
+                        Productos en este pedido
+                    </h3>
+
+                    <div class="se-table-wrapper">
+                        <table class="se-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cant.</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in detalles %}
+                                <tr>
+                                    <td class="fw-bold">{{ item.producto.nombre_producto }}</td>
+                                    <td class="text-center">{{ item.cantidad }}</td>
+                                    <td class="text-end">${{ item.precio_unitario_momento }}</td>
+                                    <td class="text-end fw-bold text-brand">${{ item.subtotal }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr class="empty-row">
+                                    <td colspan="4">No hay detalles disponibles para este pedido.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if recibo %}
+                    <div class="se-card" style="margin-top: 20px; border: 1px solid var(--border-color);">
+                        <div class="se-card-header"><h3 style="margin:0;">🧾 Recibo / facturación</h3></div>
+                        <div class="se-card-body">
+                            <p><strong>Método de pago:</strong> {{ recibo.metodo_pago.nombre_metodo }}</p>
+                            {% if recibo.metodo_pago.nombre_metodo|lower == 'efectivo' %}
+                            <p style="font-size:0.9rem; color: var(--text-secondary); margin-top:6px;">💵 <strong>Efectivo:</strong> prepara el monto exacto o lo más cercano posible al recibir el pedido (domicilio o punto de venta).</p>
+                            {% endif %}
+                            <p><strong>Subtotal:</strong> ${{ recibo.subtotal }} &nbsp;|&nbsp; <strong>IVA:</strong> ${{ recibo.iva_total }}</p>
+                            <p><strong>Emitido:</strong> {{ recibo.fecha_emision|date:"d/m/Y H:i" }}</p>
+                            {% if recibo.puntos_ganados %}
+                            <p><strong>Bonos en esta compra:</strong> {{ recibo.puntos_ganados }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="se-total-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="margin: 0; opacity: 0.7; font-size: 0.9rem; color: #fff;">Estado del pago: <strong>{% if recibo %}Registrado{% else %}Pendiente de recibo{% endif %}</strong></p>
+                                <h4 style="margin: 0; font-size: 1.1rem; color: #fff;">Monto Total Pagado</h4>
+                            </div>
+                            <div class="text-end">
+                                <span style="font-size: 2.2rem; font-weight: 900; color: #fff;">
+                                    ${{ pedido.total_pedido }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-center">
+                        <button onclick="window.print()" class="se-btn se-btn-dark se-btn-sm">
+                            🖨️ Descargar Comprobante
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Lógica para que respete el modo oscuro de tu sistema
+        const currentTheme = localStorage.getItem('shori-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+    </script>
+</body>
+</html>

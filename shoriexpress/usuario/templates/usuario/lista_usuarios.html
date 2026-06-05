@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Listado de Usuarios</h2>
+    <a href="{% url 'crear_usuario' %}" class="se-btn se-btn-primary">+ Nuevo Usuario</a>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchUsuarios"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaUsuarios">
+        <thead>
+            <tr>
+                <th>Documento</th>
+                <th>Nombre Completo</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u.get_tipo_documento_display }} {{ u.documento }}</td>
+                <td><strong>{{ u.primer_nombre }} {{ u.apellido }}</strong></td>
+                <td>{{ u.correo }}</td>
+                <td>{{ u.telefono|default:"-" }}</td>
+                <td>{{ u.rol.nombre_rol }}</td>
+                <td class="text-center">
+                    <span class="se-badge {% if u.estado == 'activo' %}se-badge-success{% else %}se-badge-danger{% endif %}">
+                        {{ u.estado|capfirst }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'editar_usuario' u.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_usuario' u.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="7">No hay usuarios registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchUsuarios',
+        tableId: 'tablaUsuarios',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Nombre, documento, correo...', columns: [0, 1, 2] },
+            { type: 'text', label: 'Rol', placeholder: 'Filtrar por rol...', columns: [4] },
+            { type: 'select', label: 'Tipo documento', column: 0, options: [
+                { value: 'cédula de ciudadanía', label: 'CC' },
+                { value: 'tarjeta de identidad', label: 'TI' },
+                { value: 'extranjería', label: 'CE' },
+                { value: 'permanencia', label: 'PEP' },
+            ]},
+            { type: 'select', label: 'Estado', column: 5, options: [
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+            ]},
+        ]
+    });
+});
+</script>
+{% endblock %}

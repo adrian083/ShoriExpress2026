@@ -1,0 +1,580 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Carrito - Shori Express</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+    <style>
+        
+        .cart-page {
+            max-width: 1200px;
+            /* Cambia el primer valor (32px) por 100px o 120px */
+            margin: 110px auto 32px auto; 
+            padding: 0 20px;
+        }
+        
+        .cart-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .cart-header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .cart-header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+        
+        .cart-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 32px;
+            align-items: start;
+        }
+        
+        .cart-items-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .cart-table th {
+            background: var(--bg-table-header);
+            color: var(--text-on-dark);
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .cart-table th.text-center {
+            text-align: center;
+        }
+        
+        .cart-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        
+        .cart-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .quantity-badge {
+            background: var(--brand-red);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            min-width: 32px;
+            text-align: center;
+        }
+        
+        .price-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        
+        .total-cell {
+            font-weight: 700;
+            color: var(--brand-red);
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 24px;
+            /* AGREGA ESTA LÍNEA CRÍTICA: */
+            overflow: hidden; 
+        }
+        
+        .summary-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: #000;
+        }
+        
+        .summary-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .summary-body {
+            padding: 24px;
+        }
+        
+        .user-info {
+            background: var(--bg-body);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .summary-row.total {
+            padding-top: 12px;
+            border-top: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        .summary-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .summary-total-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .summary-total-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--brand-red);
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 60px 40px;
+        }
+        
+        .empty-cart-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-cart h3 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+        }
+        
+        .empty-cart p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 1rem;
+        }
+        
+        #checkout-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #fff;
+            text-align: center;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+        }
+        
+        #checkout-overlay.active { display: flex; }
+        
+        .checkout-spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--brand-red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Botones negros para mejor visibilidad */
+        .se-btn-outline {
+            background: #000000 !important;
+            color: #ffffff !important;
+            border-color: #333333 !important;
+        }
+        
+        .se-btn-outline:hover {
+            background: #1a1a1a !important;
+            border-color: #555555 !important;
+        }
+        
+        @media (max-width: 968px) {
+            .cart-grid {
+                grid-template-columns: 1fr;
+                gap: 44px;
+            }
+            
+            .summary-card {
+                position: static;
+            }
+            
+            .cart-header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .cart-page {
+                padding: 0 16px;
+                margin: 24px auto;
+            }
+            
+            .cart-table th,
+            .cart-table td {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+            }
+            
+            .quantity-controls {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .summary-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="landing-body">
+
+{% include "cuentas/_client_navbar.html" with scrolled=False show_nav_links=False %}
+
+<div id="checkout-overlay" aria-live="polite">
+    <div class="checkout-spinner"></div>
+    <p style="font-size:1.05rem;max-width:320px;">Consultando hora de referencia y registrando tu pago…</p>
+</div>
+
+<div class="cart-page">
+    <div class="cart-header">
+        <h1>🛒 Mi Carrito</h1>
+        <p>Revisa tus productos antes de confirmar tu pedido</p>
+    </div>
+
+    <div class="cart-grid">
+        <div class="cart-items-card">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-center">Cantidad</th>
+                        <th class="text-center">Precio</th>
+                        <th class="text-center">Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if cart_count %}
+                        {% for key, value in request.session.cart.items %}
+                        <tr>
+                            <td><span class="product-name">{{ value.nombre }}</span></td>
+                            <td class="text-center">
+                                <div class="quantity-controls">
+                                    <a href="{% url 'restar_producto' value.producto_id %}" class="se-btn se-btn-outline se-btn-sm">−</a>
+                                    <span class="quantity-badge">{{ value.cantidad }}</span>
+                                    <a href="{% url 'agregar_al_carrito' value.producto_id %}?next={% url 'ver_carrito' %}" class="se-btn se-btn-outline se-btn-sm">+</a>
+                                </div>
+                            </td>
+                            <td class="price-cell">${{ value.precio }}</td>
+                            <td class="total-cell">${{ value.total }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'eliminar_del_carrito' value.producto_id %}" class="se-btn se-btn-outline-red se-btn-sm">
+                                    🗑️
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-cart">
+                                    <div class="empty-cart-icon">🛒</div>
+                                    <h3>Tu carrito está vacío</h3>
+                                    <p>Parece que aún no has agregado productos a tu carrito.</p>
+                                    <a href="{% url 'landing' %}#menu" class="se-btn se-btn-primary">Ver Menú</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-header">
+                <h3>📋 Resumen de Compra</h3>
+            </div>
+            <div class="summary-body">
+                
+                <div id="alerta-horario-cerrado" class="se-alert se-alert-error" style="display: {% if horario.dentro_horario %}none{% else %}block{% endif %}; margin-bottom: 14px;">
+                    <strong>Lo sentimos, estamos fuera de nuestro horario de atención.</strong>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 6px;">
+                        {{ horario.mensaje|default:"Nuestro horario es de " }}
+                    </div>
+                </div>
+
+                {% if usuario_logueado %}
+                <div class="user-info">
+                    <p style="font-size: 0.95rem; margin-bottom: 5px;">📍 {{ usuario_logueado.direccion|default:"Dirección no especificada" }}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Para: {{ usuario_logueado.primer_nombre }} {{ usuario_logueado.apellido }}</p>
+                </div>
+                {% else %}
+                <div class="user-info">
+                    <p style="font-size: 0.95rem; margin-bottom: 5px; color: var(--text-secondary);">🔒 Inicia sesión para usar tu dirección registrada y poder pagar.</p>
+                </div>
+                {% endif %}
+
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal:</span>
+                    <span class="summary-value" id="cart-subtotal">${{ cart_total_amount }}</span>
+                </div>
+                <div class="summary-row total">
+                    <span class="summary-total-label">Total:</span>
+                    <span class="summary-total-value" id="cart-total">${{ cart_total_amount }}</span>
+                </div>
+
+                {% if cart_count %}
+                {% if usuario_logueado %}
+                <form action="{% url 'finalizar_compra' %}" method="POST" id="form-pagar">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo_pedido" value="domicilio">
+
+                    <div class="se-alert se-alert-info" style="margin-bottom: 14px; text-align:left;">
+                        🎫 Bonos disponibles: <strong>{{ bonos_disponibles }}</strong> / 10
+                        <div style="margin-top:6px; font-size:0.85rem; color: var(--text-secondary);">
+                            Ganas <strong>+1 bono</strong> por compras ≥ <strong>$50.000</strong>. Máximo 10 bonos acumulables.
+                        </div>
+                    </div>
+
+                    {% if puede_redimir_bonos %}
+                    <div class="se-card" style="margin-bottom: 14px; border: 1px dashed var(--border-color);">
+                        <div class="se-card-body" style="padding: 12px;">
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                                <input type="checkbox" name="redimir_bonos" value="1" id="redimir_bonos" style="margin-top: 3px;">
+                                <span>
+                                    <strong>Usar 5 bonos</strong> para un <strong>5%</strong> de descuento en esta compra.
+                                    <div style="font-size:0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                                        Ahorro aprox: <strong>${{ descuento_bonos_valor }}</strong>. Total aprox con descuento: <strong>${{ total_con_descuento_bonos }}</strong>.
+                                    </div>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <input type="hidden" id="total-sin-descuento" value="{{ cart_total_amount }}">
+                    <input type="hidden" id="total-con-descuento" value="{{ total_con_descuento_bonos }}">
+                    {% endif %}
+
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
+                        Por ahora solo aceptamos pago en <strong>efectivo</strong> al recibir el pedido (domicilio o mostrador).
+                    </p>
+                    {% if metodo_efectivo %}
+                    <input type="hidden" name="metodo_pago_id" id="metodo_pago_id" value="{{ metodo_efectivo.id }}">
+                    {% else %}
+                    <div class="se-alert se-alert-error" style="margin-bottom:14px;">No está configurado el método «Efectivo». Avisa al administrador.</div>
+                    {% endif %}
+                    <button type="button" onclick="confirmarPago()" class="se-btn se-btn-primary" style="width: 100%; margin-bottom: 12px;" {% if not metodo_efectivo or not horario.dentro_horario %}disabled{% endif %}>
+                        ✅ Confirmar pedido y pago
+                    </button>
+                </form>
+                {% else %}
+                <div class="se-alert se-alert-info" style="margin-bottom: 14px; text-align: left;">
+                    Para <strong>finalizar el pedido</strong> y registrar el pago (por ejemplo en efectivo), necesitas una cuenta.
+                </div>
+                <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="se-btn se-btn-primary" style="width: 100%; margin-bottom: 10px; text-align: center; display: block;">
+                    Iniciar sesión y pagar
+                </a>
+                <a href="{% url 'register' %}" class="se-btn se-btn-outline se-btn-sm" style="width: 100%; text-align: center; display: block;">
+                    Crear cuenta
+                </a>
+                {% endif %}
+
+                <form action="{% url 'limpiar_carrito' %}" method="post" style="margin-top: 12px;">
+                    {% csrf_token %}
+                    <button type="submit" class="se-btn se-btn-outline-red se-btn-sm" style="width: 100%;">
+                        🗑️ Vaciar Carrito
+                    </button>
+                </form>
+                {% endif %}
+
+                <a href="{% url 'landing' %}#menu" class="se-btn se-btn-outline se-btn-sm" style="width: 100%; text-align: center; display: block; margin-top: 12px;">
+                    ← Seguir Comprando
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'JS/toast.js' %}"></script>
+<script>
+    (function() {
+        const saved = localStorage.getItem('shori-theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+
+    // Validación de horario comercial
+    function validarHorarioComercial() {
+        fetch('{% url "api_horario" %}')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const config = data.data;
+                    const btnCheckout = document.querySelector('[onclick="confirmarPago()"]');
+                    const alertaHorario = document.getElementById('alerta-horario-cerrado');
+                    
+                    if (!config.dentro_horario) {
+                        // Mostrar alerta y deshabilitar botón
+                        if (alertaHorario) {
+                            alertaHorario.style.display = 'block';
+                        }
+                        if (btnCheckout) {
+                            btnCheckout.disabled = true;
+                            btnCheckout.style.opacity = '0.6';
+                            btnCheckout.style.cursor = 'not-allowed';
+                        }
+                    } else {
+                        // Ocultar alerta y habilitar botón
+                        if (alertaHorario) {
+                            alertaHorario.style.display = 'none';
+                        }
+                        if (btnCheckout) {
+                            btnCheckout.disabled = false;
+                            btnCheckout.style.opacity = '1';
+                            btnCheckout.style.cursor = 'pointer';
+                        }
+                    }
+                }
+            })
+            .catch(err => console.warn('Error validando horario:', err));
+    }
+
+    function confirmarPago() {
+        const direccion = "{% if usuario_logueado %}{{ usuario_logueado.direccion|default:''|escapejs }}{% endif %}";
+        const usaBonos = document.getElementById('redimir_bonos')?.checked;
+        let extra = '';
+        if (usaBonos) {
+            extra = '\\n\\nSe aplicará 5% de descuento y se descontarán 5 bonos.';
+        }
+        const mensaje = '¿Confirmas el pago y el pedido?\n\nSe usará tu dirección registrada: ' + (direccion || '(no especificada)') + extra;
+        if (!confirm(mensaje)) return;
+
+        const overlay = document.getElementById('checkout-overlay');
+        const form = document.getElementById('form-pagar');
+        const metodo = document.getElementById('metodo_pago_id');
+        if (metodo && !metodo.value) {
+            alert('Selecciona un método de pago.');
+            return;
+        }
+        overlay.classList.add('active');
+
+        fetch('{% url "api_hora_bogota" %}')
+            .then(function() { form.submit(); })
+            .catch(function() { form.submit(); });
+    }
+
+    function formatMoney(num) {
+        try {
+            return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        } catch (e) {
+            return (Math.round(num * 100) / 100).toFixed(2);
+        }
+    }
+
+    function syncTotalsWithBonos() {
+        const cb = document.getElementById('redimir_bonos');
+        if (!cb) return;
+        const elSubtotal = document.getElementById('cart-subtotal');
+        const elTotal = document.getElementById('cart-total');
+        const rawSin = parseFloat(document.getElementById('total-sin-descuento')?.value || '0');
+        const rawCon = parseFloat(document.getElementById('total-con-descuento')?.value || '0');
+
+        if (!elSubtotal || !elTotal) return;
+
+        if (cb.checked) {
+            elSubtotal.style.textDecoration = 'line-through';
+            elSubtotal.style.opacity = '0.75';
+            elTotal.textContent = '$' + formatMoney(rawCon);
+        } else {
+            elSubtotal.style.textDecoration = '';
+            elSubtotal.style.opacity = '';
+            elTotal.textContent = '$' + formatMoney(rawSin);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const cb = document.getElementById('redimir_bonos');
+        if (cb) {
+            cb.addEventListener('change', syncTotalsWithBonos);
+            syncTotalsWithBonos();
+        }
+        
+        // Validar horario al cargar
+        validarHorarioComercial();
+        // Validar cada 30 segundos para cambios en horario en tiempo real
+        setInterval(validarHorarioComercial, 30000);
+    });
+</script>
+
+</body>
+</html>

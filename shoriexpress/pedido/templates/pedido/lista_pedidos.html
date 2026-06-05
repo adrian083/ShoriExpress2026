@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Consulta de Pedidos</h2>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'descargar_pedidos_pdf' %}" class="se-btn se-btn-outline">📄 Reporte PDF</a>
+        <a href="{% url 'crear_pedido' %}" class="se-btn se-btn-primary">+ Nuevo Pedido</a>
+    </div>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchPedidos"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaPedidos">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th class="text-center">Tipo</th>
+                <th>Dirección</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Demora</th>
+                <th class="text-center">Total</th>
+                <th>Fecha</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pedidos %}
+            <tr>
+                <td><strong>#{{ p.id }}</strong></td>
+                <td>{{ p.usuario.primer_nombre }} {{ p.usuario.apellido }}</td>
+                <td class="text-center">
+                    {% if p.tipo_pedido == 'domicilio' %}
+                        <span class="se-badge se-badge-info">Domicilio</span>
+                    {% else %}
+                        <span class="se-badge se-badge-neutral">{{ p.get_tipo_pedido_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.direccion_pedido|default:"-" }}</td>
+                <td class="text-center">
+                    <span class="se-badge
+                        {% if p.estado_pedido == 'pendiente' %}se-badge-warning
+                        {% elif p.estado_pedido == 'preparacion' %}se-badge-info
+                        {% elif p.estado_pedido == 'listo' %}se-badge-info
+                        {% elif p.estado_pedido == 'entregado' %}se-badge-success
+                        {% elif p.estado_pedido == 'cancelado' %}se-badge-danger
+                        {% else %}se-badge-neutral{% endif %}">
+                        {{ p.get_estado_pedido_display }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    {% if p.semaforo %}
+                    <span class="se-badge
+                        {% if p.semaforo == 'success' %}se-badge-success
+                        {% elif p.semaforo == 'warning' %}se-badge-warning
+                        {% elif p.semaforo == 'danger' %}se-badge-danger
+                        {% else %}se-badge-neutral{% endif %}">
+                        {{ p.semaforo_label }}
+                    </span>
+                    {% else %}
+                    <span class="se-badge se-badge-neutral">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-center"><strong>${{ p.total_pedido }}</strong></td>
+                <td>{{ p.fecha_pedido|date:"Y-m-d H:i" }}</td>
+                <td class="text-center">
+                    <div class="se-actions" style="justify-content:center;">
+                        {% if p.estado_pedido == 'pendiente' %}
+                        <form method="POST" action="{% url 'cambiar_estado' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuevo_estado" value="preparacion">
+                            <button type="submit" class="se-btn se-btn-primary se-btn-sm">▶ Preparación</button>
+                        </form>
+                        {% elif p.estado_pedido == 'preparacion' %}
+                        <form method="POST" action="{% url 'cambiar_estado' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuevo_estado" value="listo">
+                            <button type="submit" class="se-btn se-btn-success se-btn-sm">✅ Listo</button>
+                        </form>
+                        {% elif p.estado_pedido == 'listo' %}
+                        <form method="POST" action="{% url 'cambiar_estado' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuevo_estado" value="entregado">
+                            <button type="submit" class="se-btn se-btn-success se-btn-sm">🧾 Entregado</button>
+                        </form>
+                        {% endif %}
+
+                        {% if p.estado_pedido != 'cancelado' and p.estado_pedido != 'entregado' %}
+                        <form method="POST" action="{% url 'cambiar_estado' p.id %}" style="display:inline;" onsubmit="return confirm('¿Cancelar el pedido #{{ p.id }}?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuevo_estado" value="cancelado">
+                            <button type="submit" class="se-btn se-btn-outline-red se-btn-sm">✖ Cancelar</button>
+                        </form>
+                        {% endif %}
+
+                        <a href="{% url 'editar_pedido' p.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_pedido' p.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="9">No se encontraron pedidos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchPedidos',
+        tableId: 'tablaPedidos',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Cliente, dirección, ID...', columns: [0, 1, 3] },
+            { type: 'select', label: 'Estado', column: 4, options: [
+                { value: 'pendiente', label: 'Pendiente' },
+                { value: 'preparacion', label: 'En preparación' },
+                { value: 'listo', label: 'Listo' },
+                { value: 'entregado', label: 'Entregado' },
+                { value: 'cancelado', label: 'Cancelado' },
+            ]},
+            { type: 'select', label: 'Tipo', column: 2, options: [
+                { value: 'domicilio', label: 'Domicilio' },
+                { value: 'local', label: 'Local' },
+                { value: 'llevar', label: 'Para llevar' },
+            ]},
+            { type: 'number_range', label: 'Total ($)', column: 6 },
+            { type: 'date_range', label: 'Fecha', column: 7 },
+        ]
+    });
+});
+</script>
+{% endblock %}

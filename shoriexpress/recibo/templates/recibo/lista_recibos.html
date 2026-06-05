@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Gestión de Recibos / Facturas</h2>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'descargar_reporte_recibos_pdf' %}" class="se-btn se-btn-outline">📊 Reporte PDF</a>
+        <a href="{% url 'crear_recibo' %}" class="se-btn se-btn-primary">+ Nuevo Recibo</a>
+    </div>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchRecibos"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaRecibos">
+        <thead>
+            <tr>
+                <th>N° Recibo</th>
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Método Pago</th>
+                <th class="text-center">Subtotal</th>
+                <th class="text-center">IVA</th>
+                <th class="text-center">Total Pagado</th>
+                <th>Bonos</th>
+                <th>Fecha Emisión</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in recibos %}
+            <tr>
+                <td><strong>#{{ r.id }}</strong></td>
+                <td><span class="se-badge se-badge-info">Pedido #{{ r.pedido.id }}</span></td>
+                <td>{{ r.pedido.usuario.primer_nombre }} {{ r.pedido.usuario.apellido }}</td>
+                <td>{{ r.metodo_pago.nombre_metodo }} <span class="se-badge {% if r.metodo_pago.esta_activo %}se-badge-success{% else %}se-badge-neutral{% endif %}">{% if r.metodo_pago.esta_activo %}activo{% else %}inactivo{% endif %}</span></td>
+                <td class="text-center">${{ r.subtotal|floatformat:2 }}</td>
+                <td class="text-center">${{ r.iva_total|floatformat:2 }}</td>
+                <td class="text-center"><strong style="color: var(--brand-red); font-size: 1.05rem;">${{ r.total_pagado|floatformat:2 }}</strong></td>
+                <td>
+                    {% if r.puntos_ganados > 0 %}
+                        <span class="se-badge se-badge-success">🎁 {{ r.puntos_ganados }}</span>
+                    {% else %}
+                        <span class="se-badge" style="background: var(--color-warning-bg); color: var(--color-warning);">Sin bonos</span>
+                    {% endif %}
+                </td>
+                <td>{{ r.fecha_emision|date:"d/m/Y H:i" }}</td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'detalle_recibo' r.id %}" class="se-btn se-btn-info se-btn-sm" title="Ver detalle completo">👁️ Ver</a>
+                        <a href="{% url 'descargar_factura_pdf' r.id %}" class="se-btn se-btn-primary se-btn-sm" title="Descargar JSON PDF">📄</a>
+                        <a href="{% url 'editar_recibo' r.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_recibo' r.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="10" style="text-align: center; padding: 40px;">
+                    <p style="color: var(--text-muted); margin: 0;">No hay recibos registrados.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchRecibos',
+        tableId: 'tablaRecibos',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'N° recibo, cliente, pedido...', columns: [0, 1, 2, 3] },
+            { type: 'select', label: 'Método activo', column: 3, options: [
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+            ]},
+            { type: 'number_range', label: 'Total Pagado', column: 6 },
+            { type: 'date_range', label: 'Fecha Emisión', column: 8 },
+        ]
+    });
+});
+</script>
+
+<!-- Toast Notifications (integración con Django messages) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar toasts de mensajes de Django
+    const messages = document.querySelectorAll('[data-message]');
+    messages.forEach(msg => {
+        const type = msg.getAttribute('data-type');
+        const text = msg.getAttribute('data-message');
+        showToast(text, type);
+    });
+});
+</script>
+
+{% endblock %}

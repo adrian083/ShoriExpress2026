@@ -1,0 +1,143 @@
+{% load static %}
+<nav class="landing-nav {% if scrolled %}scrolled{% endif %}" id="clientNav">
+    
+    <div class="landing-nav-inner">
+        <!-- Logo -->
+        <a href="{% url 'landing' %}" class="landing-nav-brand">
+        <span class="brand-icon">
+            <img src="{% static 'IMG/SHORIp.ico' %}" alt="Shori" class="sidebar-logo">
+        </span>            
+        <span class="brand-text">Shori Express</span>
+        </a>
+
+        <!-- Desktop Links (solo en landing/hero) -->
+        
+        <div class="landing-nav-links" id="navLinks">
+            <a href="{% url 'landing' %}" class="landing-nav-link">Inicio</a>
+            <a href="{% url 'menu_publico' %}" class="landing-nav-link">Menú</a>
+            <a href="{% url 'landing' %}#nosotros" class="landing-nav-link">Nosotros</a>
+            <a href="{% url 'landing' %}#contacto" class="landing-nav-link">Contacto</a>
+        </div>
+        
+
+        <!-- Right Actions -->
+        <div class="landing-nav-actions client-nav-actions">
+            <!-- Carrito con Badge -->
+            <a href="{% url 'ver_carrito' %}"
+                id="cart-icon-nav"
+                class="se-btn se-btn-outline-red se-btn-sm nav-cart-btn"
+                style="position: relative; transition: all 0.3s ease;">
+                🛒
+                {% if cart_count > 0 %}
+                    <span class="cart-badge">{{ cart_count }}</span>
+                {% endif %}
+                <span class="cart-amount">
+                    {% if cart_count > 0 %}
+                        ${{ cart_total_amount }}
+                    {% else %}
+                        Vacío
+                    {% endif %}
+                </span>
+            </a>
+
+            <!-- Menú Desktop -->
+            <div class="nav-menu-desktop">
+                {% if usuario_logueado %}
+                    {% if es_admin %}
+                        <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm">
+                            📊 Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'mi_cuenta' usuario_logueado.id %}" class="se-btn se-btn-outline se-btn-sm">
+                            ⚙️ Mi cuenta
+                        </a>
+                        <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline se-btn-sm">
+                            📋 Mis pedidos
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="se-btn se-btn-dark se-btn-sm">
+                        Salir
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="se-btn se-btn-dark se-btn-sm">
+                        Ingresar
+                    </a>
+                    <a href="{% url 'register' %}" class="se-btn se-btn-primary se-btn-sm">
+                        Registrarse
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Hamburger Mobile -->
+        <button class="landing-hamburger" id="hamburgerBtn" aria-label="Abrir menú">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="landing-mobile-menu" id="mobileMenu">
+    {% if show_nav_links %}
+    <a href="#hero" class="landing-mobile-link">Inicio</a>
+    <a href="{% url 'menu_publico' %}" class="landing-mobile-link">Menú</a>
+    <a href="#nosotros" class="landing-mobile-link">Nosotros</a>
+    <a href="#contacto" class="landing-mobile-link">Contacto</a>
+    {% else %}
+    <a href="{% url 'menu_publico' %}" class="landing-mobile-link">Menú</a>
+    {% endif %}
+    
+    <div class="landing-mobile-actions">
+        {% if usuario_logueado %}
+            {% if es_admin %}
+                <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%;">📊 Dashboard</a>
+            {% else %}
+                <a href="{% url 'mi_cuenta' usuario_logueado.id %}" class="se-btn se-btn-outline se-btn-sm" style="width:100%; margin-bottom: 8px;">⚙️ Mis datos</a>
+                <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%; margin-bottom: 10px;">📋 Mis pedidos</a>
+                
+                <div style="text-align:center; padding: 8px; color: var(--text-primary); font-weight: 600; font-size: 0.9rem;">
+                    👤 {{ usuario_logueado.primer_nombre }}
+                    <br><span style="font-size: 0.75rem; color: var(--text-muted);">Cliente</span>
+                </div>
+            {% endif %}
+            <a href="{% url 'logout' %}" class="se-btn se-btn-dark se-btn-sm" style="width:100%;">Cerrar Sesión</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%;">Iniciar Sesión</a>
+            <a href="{% url 'register' %}" class="se-btn se-btn-primary se-btn-sm" style="width:100%;">Registrarse</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Mobile menu toggle
+    const hamburger = document.getElementById('hamburgerBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (hamburger) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('open');
+        });
+
+        document.querySelectorAll('.landing-mobile-link').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('open');
+            });
+        });
+    }
+
+    // Navbar scroll effect (si está habilitado)
+    const clientNav = document.getElementById('clientNav');
+    if (clientNav && !clientNav.classList.contains('scrolled')) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                clientNav.classList.add('scrolled');
+            } else {
+                clientNav.classList.remove('scrolled');
+            }
+        });
+    }
+</script>

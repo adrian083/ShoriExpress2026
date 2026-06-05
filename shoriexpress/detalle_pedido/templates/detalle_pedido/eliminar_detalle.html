@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-confirm-card">
+    <div class="se-confirm-header">
+        <div class="confirm-icon">⚠️</div>
+        <h4>¿Quitar Producto del Pedido?</h4>
+    </div>
+    <div class="se-confirm-body text-center">
+        <p>Estás por eliminar <strong>{{ detalle.producto.nombre_producto }}</strong> 
+           del pedido <strong>#{{ detalle.pedido.id }}</strong>.</p>
+        
+        <p class="text-muted small">Esta acción no se puede deshacer y el ítem desaparecerá del detalle del pedido.</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="se-confirm-actions">
+                <button type="submit" class="se-btn se-btn-danger">Confirmar Eliminación</button>
+                <a href="{% url 'lista_detalles' %}" class="se-btn se-btn-outline">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="se-confirm-card">
+        <div class="se-confirm-header">
+            <div class="confirm-icon">⚠️</div>
+            <h4>¿Cancelar o Eliminar Pedido?</h4>
+        </div>
+        <div class="se-confirm-body">
+            <p>Estás por eliminar el pedido <strong>#{{ pedido.id }}</strong> del cliente <strong>{{ pedido.usuario.primer_nombre }}</strong>.</p>
+            <p class="text-muted small">Esta acción no se puede deshacer.</p>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="se-confirm-actions">
+                    <button type="submit" class="se-btn se-btn-danger">Confirmar Eliminación</button>
+                    <a href="{% url 'lista_pedidos' %}" class="se-btn se-btn-outline">Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endblock %}

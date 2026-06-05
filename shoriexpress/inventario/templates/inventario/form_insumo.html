@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if insumo %}Editar{% else %}Crear{% endif %} Insumo</h3>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="insumoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="nombre">Nombre del Insumo *</label>
+                    <input type="text" id="nombre" name="nombre" class="se-form-control" 
+                           value="{{ insumo.nombre_insumo|default:'' }}" required
+                           minlength="3" maxlength="100" placeholder="Ej: Harina de Trigo">
+                </div>
+
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="categoria">Categoría *</label>
+                    <input type="text" id="categoria" name="categoria" class="se-form-control" 
+                           value="{{ insumo.categoria_insumo|default:'' }}" required
+                           minlength="3" maxlength="50" placeholder="Ej: Abarrotes">
+                </div>
+
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="unidad">Unidad de Medida *</label>
+                    <select id="unidad" name="unidad" class="se-form-control" required>
+                        <option value="" disabled selected>Seleccione...</option>
+                        <option value="GR" {% if insumo.unidad_medida == 'GR' %}selected{% endif %}>Gramos (GR)</option>
+                        <option value="KG" {% if insumo.unidad_medida == 'KG' %}selected{% endif %}>Kilogramos (KG)</option>
+                        <option value="ML" {% if insumo.unidad_medida == 'ML' %}selected{% endif %}>Mililitros (ML)</option>
+                        <option value="LT" {% if insumo.unidad_medida == 'LT' %}selected{% endif %}>Litros (LT)</option>
+                        <option value="UN" {% if insumo.unidad_medida == 'UN' %}selected{% endif %}>Unidad (UN)</option>
+                    </select>
+                </div>
+
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="stock">Stock Actual *</label>
+                    <input type="number" step="0.01" id="stock" name="stock" class="se-form-control" 
+                           value="{{ insumo.stock_actual|default:'' }}" required min="0">
+                </div>
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="stock_minimo">Stock Mínimo *</label>
+                    <input type="number" step="0.01" id="stock_minimo" name="stock_minimo" class="se-form-control" 
+                           value="{{ insumo.stock_minimo|default:'' }}" required min="0">
+                </div>
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="stock_maximo">Stock Máximo</label>
+                    <input type="number" step="0.01" id="stock_maximo" name="stock_maximo" class="se-form-control" 
+                           value="{{ insumo.stock_maximo|default:'' }}" min="0">
+                </div>
+
+                <div class="se-col-3 se-form-group">
+                    <label class="se-form-label" for="precio_compra">Precio Compra Ref. *</label>
+                    <input type="number" step="0.01" id="precio_compra" name="precio_compra" class="se-form-control" 
+                           value="{{ insumo.precio_compra_referencia|default:'' }}" required min="0" placeholder="0.00">
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="iva">IVA (%)</label>
+                    <input type="number" step="0.01" id="iva" name="iva" class="se-form-control" 
+                           value="{{ insumo.iva_porcentaje|default:0 }}" min="0" max="100">
+                </div>
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="estado">Estado *</label>
+                    <select id="estado" name="estado" class="se-form-control" required>
+                        <option value="disponible" {% if insumo.estado_insumo == 'disponible' %}selected{% endif %}>Disponible</option>
+                        <option value="agotado" {% if insumo.estado_insumo == 'agotado' %}selected{% endif %}>Agotado</option>
+                        <option value="pocos" {% if insumo.estado_insumo == 'pocos' %}selected{% endif %}>Pocas Unidades</option>
+                    </select>
+                </div>
+
+                {% if es_nuevo %}
+                <div class="se-col-12 se-form-group" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+                    <strong style="display:block;margin-bottom:8px;">📦 Stock inicial y lote (opcional)</strong>
+                    <p class="se-form-hint" style="margin-bottom:12px;">Si el stock inicial es mayor a 0, se genera un movimiento <em>entrada inicial</em> y se registra el lote en inventario por lote.</p>
+                    <div class="se-form-grid">
+                        <div class="se-col-6 se-form-group">
+                            <label class="se-form-label" for="lote_inicial">Código de lote</label>
+                            <input type="text" id="lote_inicial" name="lote_inicial" class="se-form-control" maxlength="50" placeholder="Ej: LOT-2025-001" pattern="[A-Za-z0-9-]*">
+                        </div>
+                        <div class="se-col-6 se-form-group">
+                            <label class="se-form-label" for="fecha_vencimiento_inicial">Vencimiento del lote</label>
+                            <input type="date" id="fecha_vencimiento_inicial" name="fecha_vencimiento_inicial" class="se-form-control">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 20px;">
+                <a href="{% url 'lista_inventario' %}" class="se-btn se-btn-outline">Volver</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if insumo %}Actualizar{% else %}Guardar{% endif %} Insumo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('insumoForm').addEventListener('submit', function(e) {
+    const sMin = parseFloat(document.getElementById('stock_minimo').value);
+    const sMax = parseFloat(document.getElementById('stock_maximo').value);
+    const sAct = parseFloat(document.getElementById('stock').value);
+    const iva = parseFloat(document.getElementById('iva').value);
+
+    // Validación: Stock Mínimo vs Máximo
+    if (!isNaN(sMax) && sMin > sMax) {
+        alert("Error: El stock mínimo no puede ser mayor al stock máximo.");
+        e.preventDefault();
+        return;
+    }
+
+    // Validación: IVA realista
+    if (iva < 0 || iva > 100) {
+        alert("El porcentaje de IVA debe estar entre 0 y 100.");
+        e.preventDefault();
+        return;
+    }
+});
+</script>
+{% endblock %}

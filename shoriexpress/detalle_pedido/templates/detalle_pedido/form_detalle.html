@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card">
+    <div class="se-form-header">
+        <h3>{% if detalle %}Editar{% else %}Agregar{% endif %} Producto al Pedido</h3>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="detallePedidoForm">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="id_pedido">Seleccionar Pedido *</label>
+                    <select name="id_pedido" id="id_pedido" class="se-form-control" required>
+                        <option value="">--- Elija un pedido ---</option>
+                        {% for p in pedidos %}
+                        <option value="{{ p.id }}" {% if detalle.pedido.id == p.id %}selected{% endif %}>
+                            Pedido #{{ p.id }} - {{ p.usuario.primer_nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="id_producto">Seleccionar Producto *</label>
+                    <select name="id_producto" id="id_producto" class="se-form-control" required>
+                        <option value="">--- Elija un producto ---</option>
+                        {% for prod in productos %}
+                        <option value="{{ prod.id }}" {% if detalle.producto.id == prod.id %}selected{% endif %}>
+                            {{ prod.nombre_producto }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="cantidad">Cantidad *</label>
+                    <input type="number" 
+                           id="cantidad"
+                           name="cantidad" 
+                           class="se-form-control" 
+                           value="{{ detalle.cantidad|default:'' }}" 
+                           placeholder="Ej: 1" 
+                           required
+                           min="1"
+                           max="100"
+                           step="1"
+                           title="La cantidad mínima es 1 y debe ser un número entero.">
+                </div>
+
+                <div class="se-col-6 se-form-group">
+                    <label class="se-form-label" for="precio">Precio Unitario ($) *</label>
+                    <input type="number" 
+                           id="precio"
+                           name="precio" 
+                           class="se-form-control" 
+                           value="{{ detalle.precio_unitario_momento|stringformat:".2f"|default:'' }}" 
+                           placeholder="0.00" 
+                           required
+                           min="50"
+                           max="1000000"
+                           step="0.01"
+                           title="Ingrese un precio válido (mínimo $50.00)">
+                </div>
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                <a href="{% url 'lista_detalles' %}" class="se-btn se-btn-outline">Cancelar</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if detalle %}Actualizar{% else %}Guardar{% endif %} Ítem
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Validación de seguridad adicional con JS
+    document.getElementById('detallePedidoForm').addEventListener('submit', function(e) {
+        const cantidad = document.getElementById('cantidad').value;
+        const precio = document.getElementById('precio').value;
+
+        if (parseInt(cantidad) <= 0) {
+            alert("La cantidad debe ser mayor a cero.");
+            e.preventDefault();
+            return;
+        }
+
+        if (parseFloat(precio) < 50) {
+            alert("El precio parece demasiado bajo. Por favor verifique.");
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

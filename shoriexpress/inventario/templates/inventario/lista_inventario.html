@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Gestión de Inventario</h2>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'descargar_inventario_pdf' %}" class="se-btn se-btn-outline">📄 Reporte PDF</a>
+        <a href="{% url 'crear_insumo' %}" class="se-btn se-btn-primary">+ Nuevo Insumo</a>
+    </div>
+</div>
+
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 16px;">
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin:0;">
+        Cada insumo puede tener varios <strong>lotes</strong> (como una receta con varios ingredientes): despliega la tarjeta para ver cantidad y fechas por lote.
+    </p>
+</div>
+
+<!-- Smart Search (tabla auxiliar oculta para filtros) -->
+<div class="se-search-container" id="searchInventario"></div>
+
+<details style="margin-bottom: 20px;">
+    <summary style="cursor: pointer; font-weight: 600; color: var(--text-secondary);">📊 Tabla compacta (búsqueda)</summary>
+    <div class="se-table-wrapper" style="margin-top: 12px;">
+        <table class="se-table" id="tablaInventario">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Unidad</th>
+                    <th>Stock</th>
+                    <th>Precio Compra</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Movimientos Rápidos</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in insumos %}
+                <tr>
+                    <td><strong>{{ i.nombre_insumo }}</strong></td>
+                    <td>{{ i.categoria_insumo }}</td>
+                    <td>{{ i.get_unidad_medida_display }}</td>
+                    <td>{{ i.stock_actual }} {{ i.get_unidad_medida_display }}</td>
+                    <td>${{ i.precio_compra_referencia }}</td>
+                    <td class="text-center">
+                        <span class="se-badge {% if i.estado_insumo == 'disponible' %}se-badge-success{% elif i.estado_insumo == 'agotado' %}se-badge-danger{% else %}se-badge-warning{% endif %}">
+                            {{ i.estado_insumo|capfirst }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'crear_movimiento' %}?insumo_id={{ i.id }}&tipo=entrada" class="se-btn se-btn-success se-btn-sm">📥 Entrada</a>
+                        <a href="{% url 'crear_movimiento' %}?insumo_id={{ i.id }}&tipo=salida_desperdicio" class="se-btn se-btn-danger se-btn-sm">📤 Salida</a>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'editar_insumo' i.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_insumo' i.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row"><td colspan="8">No hay insumos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<div style="display: flex; flex-direction: column; gap: 16px;">
+    {% for i in insumos %}
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;">
+        <div style="padding: 12px 16px; background: var(--bg-main); border-bottom: 1px solid var(--border-color); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+            <div>
+                <strong style="font-size: 1.05rem;">{{ i.nombre_insumo }}</strong>
+                <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 8px;">{{ i.categoria_insumo }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="se-badge {% if i.estado_insumo == 'disponible' %}se-badge-success{% elif i.estado_insumo == 'agotado' %}se-badge-danger{% else %}se-badge-warning{% endif %}">{{ i.estado_insumo|capfirst }}</span>
+                <span style="font-weight: 700; color: var(--brand-color);">Stock: {{ i.stock_actual }} {{ i.get_unidad_medida_display }}</span>
+                <a href="{% url 'crear_movimiento' %}?insumo_id={{ i.id }}&tipo=entrada" class="se-btn se-btn-success se-btn-sm">📥 Entrada</a>
+                <a href="{% url 'editar_insumo' i.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+            </div>
+        </div>
+        <table class="se-table" style="margin: 0;">
+            <thead>
+                <tr>
+                    <th>Lote</th>
+                    <th class="text-center">Cantidad en lote</th>
+                    <th class="text-center">Registrado</th>
+                    <th class="text-center">Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in i.lotes.all %}
+                <tr>
+                    <td><code>{{ l.codigo_lote }}</code></td>
+                    <td class="text-center">{{ l.cantidad }} {{ i.get_unidad_medida_display }}</td>
+                    <td class="text-center" style="font-size: 0.85rem;">{{ l.fecha_registro|date:"d/m/Y H:i" }}</td>
+                    <td class="text-center">{% if l.fecha_vencimiento %}{{ l.fecha_vencimiento|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                        Sin lotes registrados aún. Registra una <strong>entrada</strong> con código de lote para ver filas aquí.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% empty %}
+    <p style="text-align: center; color: var(--text-secondary);">No hay insumos.</p>
+    {% endfor %}
+</div>
+
+<details style="margin-top: 20px;">
+    <summary style="cursor: pointer; font-weight: 600; color: var(--text-secondary);">📅 Lotes (filtro por fechas)</summary>
+    <div class="se-search-container" id="searchLotes" style="margin-top: 12px;"></div>
+    <div class="se-table-wrapper" style="margin-top: 8px;">
+        <table class="se-table" id="tablaLotes">
+            <thead>
+                <tr>
+                    <th>Insumo</th>
+                    <th>Lote</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-center">Registrado</th>
+                    <th class="text-center">Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in insumos %}
+                    {% for l in i.lotes.all %}
+                    <tr>
+                        <td><strong>{{ i.nombre_insumo }}</strong></td>
+                        <td><code>{{ l.codigo_lote }}</code></td>
+                        <td class="text-center">{{ l.cantidad }} {{ i.get_unidad_medida_display }}</td>
+                        <td class="text-center">{{ l.fecha_registro|date:"Y-m-d" }}</td>
+                        <td class="text-center">{% if l.fecha_vencimiento %}{{ l.fecha_vencimiento|date:"Y-m-d" }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<!-- Estadísticas abajo de la tabla general -->
+<details style="margin-top: 24px;">
+    <summary style="cursor: pointer; font-weight: 600; color: var(--text-secondary);">📈 Estadísticas del Inventario</summary>
+    <div style="margin-top: 12px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg);">
+        <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight:600; margin:0;">
+            Valor total aproximado del inventario: <strong>${{ total_valor_inventario|floatformat:2 }}</strong>
+        </p>
+    </div>
+</details>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchInventario',
+        tableId: 'tablaInventario',
+        filters: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Nombre del insumo...', columns: [0] },
+            { type: 'text', label: 'Categoría', placeholder: 'Filtrar categoría...', columns: [1] },
+            { type: 'select', label: 'Unidad', column: 2, options: [
+                { value: 'gramos', label: 'Gramos' },
+                { value: 'kilogramos', label: 'Kilogramos' },
+                { value: 'mililitros', label: 'Mililitros' },
+                { value: 'litros', label: 'Litros' },
+                { value: 'unidad', label: 'Unidad' },
+            ]},
+            { type: 'select', label: 'Estado', column: 5, options: [
+                { value: 'disponible', label: 'Disponible' },
+                { value: 'agotado', label: 'Agotado' },
+                { value: 'pocas', label: 'Pocas Unidades' },
+            ]},
+        ]
+    });
+
+    initSmartSearch({
+        containerId: 'searchLotes',
+        tableId: 'tablaLotes',
+        filters: [
+            { type: 'text', label: '🔍 Insumo / lote', placeholder: 'Buscar...', columns: [0, 1] },
+            { type: 'date_range', label: 'Registrado', column: 3 },
+            { type: 'date_range', label: 'Vencimiento', column: 4 },
+        ]
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+﻿nombre_insumo,categoria_insumo,unidad_medida,stock_actual,stock_minimo,stock_maximo,precio_compra_referencia,iva_porcentaje,estado_insumo
+Chorizo artesanal res cervuno 12 mm,Cárnicos,KG,18.50,5.00,40.00,18900.00,0.00,disponible
+Pan brioche perro caliente,Panadería,UN,120,30,200,820,0,disponible
+Papa criolla pastusa,Verduras,KG,25,8,50,3600,0,disponible

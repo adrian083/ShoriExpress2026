@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="se-page-header">
+    <h2>Listado de Roles</h2>
+    <a href="{% url 'crear_rol' %}" class="se-btn se-btn-primary">+ Nuevo Rol</a>
+</div>
+
+<!-- Smart Search -->
+<div class="se-search-container" id="searchRoles"></div>
+
+<div class="se-table-wrapper">
+    <table class="se-table" id="tablaRoles">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre del Rol</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in roles %}
+            <tr>
+                <td><strong>#{{ r.id }}</strong></td>
+                <td>{{ r.nombre_rol }}</td>
+                <td class="text-center">
+                    <div class="se-btn-group">
+                        <a href="{% url 'editar_rol' r.id %}" class="se-btn se-btn-warning se-btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_rol' r.id %}" class="se-btn se-btn-danger se-btn-sm">Eliminar</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="3">No hay roles registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'JS/search.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSmartSearch({
+        containerId: 'searchRoles',
+        tableId: 'tablaRoles',
+        filters: [
+            { type: 'text', label: '🔍 Buscar nombre', placeholder: 'Nombre del rol...', columns: [1] },
+        ]
+    });
+});
+</script>
+{% endblock %}

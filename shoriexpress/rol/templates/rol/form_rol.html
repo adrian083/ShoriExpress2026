@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="se-form-card" style="max-width: 500px;">
+    <div class="se-form-header">
+        <h3>{% if rol %}Editar{% else %}Crear Nuevo{% endif %} Rol</h3>
+    </div>
+    <div class="se-form-body">
+        <form method="POST" id="rolForm" action="{% if rol %}{% url 'editar_rol' rol.id %}{% else %}{% url 'crear_rol' %}{% endif %}">
+            {% csrf_token %}
+            <div class="se-form-grid">
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="nombre_rol">Nombre del Rol *</label>
+                    <input type="text" 
+                           id="nombre_rol"
+                           name="nombre_rol" 
+                           class="se-form-control"
+                           value="{{ rol.nombre_rol|default:'' }}" 
+                           placeholder="Ej: Administrador, Cajero, Cocinero..." 
+                           required
+                           minlength="3"
+                           maxlength="50"
+                           pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"
+                           title="Solo letras. Ejemplo: Administrador">
+                    <span class="se-form-hint">Usa nombres claros y sin símbolos.</span>
+                </div>
+            </div>
+
+            <div class="se-form-actions" style="margin-top: 20px;">
+                <a href="{% url 'lista_roles' %}" class="se-btn se-btn-outline">Volver</a>
+                <button type="submit" class="se-btn se-btn-success">
+                    {% if rol %}Actualizar{% else %}Guardar{% endif %} Rol
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('rolForm').addEventListener('submit', function(e) {
+        const input = document.getElementById('nombre_rol');
+        
+        // Limpiar espacios accidentales
+        input.value = input.value.trim();
+
+        if (input.value.length < 3) {
+            alert("El nombre del rol debe tener al menos 3 letras.");
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,413 @@
+{% load static %}
+{% load producto_tags %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shori Express - Sabor que Llega a Tu Puerta</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'landing.css' %}">
+</head>
+<style>
+@keyframes cartBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+@keyframes cartPulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+.cart-animate {
+    animation: cartBounce 0.4s ease-in-out, cartPulse 0.6s ease-out;
+}
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc2626;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-width: 20px;
+    text-align: center;
+}
+</style>
+<body class="landing-body">
+
+{% include "cuentas/_client_navbar.html" with show_nav_links=True scrolled=False %}
+
+<section class="landing-hero" id="hero">
+    <div class="landing-hero-bg"></div>
+    <div class="landing-hero-content">
+        {% if usuario_logueado and not es_admin %}
+            <span class="landing-hero-badge">👋 ¡Hola, {{ usuario_logueado.primer_nombre }}!</span>
+        {% else %}
+            <span class="landing-hero-badge">🔥 ¡Nuevos Sabores Disponibles!</span>
+        {% endif %}
+        <h1>Sabor que Llega<br>a <span class="text-brand">Tu Puerta</span></h1>
+        <p>Disfruta de la mejor comida rápida con ingredientes frescos y de calidad. Pedidos rápidos, entrega a domicilio y sabor inigualable.</p>
+        <div class="landing-hero-btns">
+            <a href="{% url 'menu_publico' %}" class="se-btn se-btn-primary se-btn-lg">
+                🍔 Ver menú
+            </a>
+            <a href="#nosotros" class="se-btn se-btn-outline se-btn-lg" style="border-color: rgba(255,255,255,0.3); color: #fff;">
+                Conócenos
+            </a>
+        </div>
+        <div class="landing-hero-stats">
+            <div class="landing-stat">
+                <span class="landing-stat-number">500+</span>
+                <span class="landing-stat-label">Pedidos Diarios</span>
+            </div>
+            <div class="landing-stat">
+                <span class="landing-stat-number">50+</span>
+                <span class="landing-stat-label">Productos</span>
+            </div>
+            <div class="landing-stat">
+                <span class="landing-stat-number">4.8</span>
+                <span class="landing-stat-label">⭐ Calificación</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section" id="servicios">
+    <div class="landing-container">
+        <div class="landing-section-header">
+            <span class="landing-section-badge">Nuestros Servicios</span>
+            <h2>¿Por qué elegir <span class="text-brand">Shori Express</span>?</h2>
+            <p>Nos dedicamos a ofrecerte la mejor experiencia gastronómica con un servicio excepcional.</p>
+        </div>
+        <div class="landing-features-grid">
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">🚀</div>
+                <h3>Entrega Rápida</h3>
+                <p>Tu pedido llega en menos de 30 minutos. Rapidez sin sacrificar la calidad.</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">🥗</div>
+                <h3>Ingredientes Frescos</h3>
+                <p>Utilizamos solo ingredientes frescos y de la más alta calidad en cada preparación.</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">💳</div>
+                <h3>Pago Fácil</h3>
+                <p>Múltiples métodos de pago para tu comodidad: efectivo, tarjeta, transferencia.</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">📱</div>
+                <h3>Pedidos Online</h3>
+                <p>Realiza tu pedido desde cualquier dispositivo, en cualquier momento del día.</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">⭐</div>
+                <h3>Calidad Premium</h3>
+                <p>Cada plato es preparado con dedicación y siguiendo nuestras recetas exclusivas.</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="landing-feature-icon">🎁</div>
+                <h3>Programa de Puntos</h3>
+                <p>Acumula puntos con cada compra y canjéalos por descuentos y productos gratis.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section landing-section-alt" id="menu">
+    <div class="landing-container">
+        <div class="landing-section-header">
+            <span class="landing-section-badge">Nuestro Menú</span>
+            <h2>Platos <span class="text-brand">Destacados</span></h2>
+            <p>Descubre nuestros productos más populares, preparados con los mejores ingredientes.</p>
+        </div>
+        <div class="landing-menu-grid">
+            {% if productos %}
+                {% for producto in productos %}
+                <div class="landing-menu-card">
+                    <div class="landing-menu-img">
+                        <img src="{{ producto|producto_imagen_url }}" alt="{{ producto.nombre_producto }}" loading="lazy"
+                            onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
+                    </div>
+
+                    <div class="landing-menu-info">
+                        <h4>{{ producto.nombre_producto }}</h4>
+                        <p>{{ producto.descripcion_producto|default:"Sabor auténtico preparado al momento." }}</p>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <span style="font-weight: 700; color: var(--brand-color); font-size: 1.1rem;">
+                                ${{ producto.precio_venta }}
+                            </span>
+                            <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm" style="padding: 5px 12px; font-size: 0.8rem;">
+                                + Agregar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: var(--text-secondary); grid-column: 1/-1;">No hay productos disponibles en este momento.</p>
+            {% endif %}
+        </div>
+        {% if not usuario_logueado %}
+        <div class="landing-menu-cta">
+            <p>¿Quieres hacer un pedido? Regístrate y accede a nuestro menú completo.</p>
+            <a href="{% url 'register' %}" class="se-btn se-btn-primary se-btn-lg">Crear Cuenta Gratis</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="landing-section" id="nosotros">
+    <div class="landing-container">
+        <div class="landing-about-grid">
+            <div class="landing-about-content">
+                <span class="landing-section-badge">Sobre Nosotros</span>
+                <h2>Más que comida rápida,<br>una <span class="text-brand">experiencia</span></h2>
+                <p>En Shori Express nos apasiona la buena comida. Desde nuestros inicios, nos hemos dedicado a ofrecer productos de la más alta calidad con un servicio rápido y eficiente.</p>
+                <p>Nuestro equipo trabaja con dedicación para que cada pedido sea una experiencia memorable. Utilizamos ingredientes frescos, recetas cuidadosamente elaboradas y un sistema de gestión que nos permite garantizar la calidad en cada entrega.</p>
+                <div class="landing-about-highlights">
+                    <div class="landing-about-highlight">
+                        <span class="landing-about-highlight-icon">✅</span>
+                        <span>Ingredientes 100% frescos</span>
+                    </div>
+                    <div class="landing-about-highlight">
+                        <span class="landing-about-highlight-icon">✅</span>
+                        <span>Preparación al momento</span>
+                    </div>
+                    <div class="landing-about-highlight">
+                        <span class="landing-about-highlight-icon">✅</span>
+                        <span>Entrega garantizada</span>
+                    </div>
+                    <div class="landing-about-highlight">
+                        <span class="landing-about-highlight-icon">✅</span>
+                        <span>Atención personalizada</span>
+                    </div>
+                </div>
+            </div>
+            <div class="landing-about-visual">
+                <div class="landing-about-card">
+                    <div class="landing-about-card-icon">🏆</div>
+                    <h3>+3 Años</h3>
+                    <p>de experiencia sirviendo sabor</p>
+                </div>
+                <div class="landing-about-card">
+                    <div class="landing-about-card-icon">❤️</div>
+                    <h3>+10,000</h3>
+                    <p>clientes satisfechos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section landing-section-alt" id="testimonios">
+    <div class="landing-container">
+        <div class="landing-section-header">
+            <span class="landing-section-badge">Testimonios</span>
+            <h2>Lo que dicen nuestros <span class="text-brand">clientes</span></h2>
+        </div>
+        <div class="landing-testimonials-grid">
+            <div class="landing-testimonial-card">
+                <div class="landing-testimonial-stars">⭐⭐⭐⭐⭐</div>
+                <p>"La mejor comida rápida de la zona. Siempre llega caliente y en tiempo récord. ¡Los recomiendo al 100%!"</p>
+                <div class="landing-testimonial-author">
+                    <div class="landing-testimonial-avatar">MC</div>
+                    <div>
+                        <strong>María C.</strong>
+                        <span>Cliente frecuente</span>
+                    </div>
+                </div>
+            </div>
+            <div class="landing-testimonial-card">
+                <div class="landing-testimonial-stars">⭐⭐⭐⭐⭐</div>
+                <p>"Las hamburguesas son increíbles. El programa de puntos es genial, ya he canjeado varios descuentos."</p>
+                <div class="landing-testimonial-author">
+                    <div class="landing-testimonial-avatar">JR</div>
+                    <div>
+                        <strong>Juan R.</strong>
+                        <span>Cliente desde 2023</span>
+                    </div>
+                </div>
+            </div>
+            <div class="landing-testimonial-card">
+                <div class="landing-testimonial-stars">⭐⭐⭐⭐⭐</div>
+                <p>"Excelente servicio y la calidad de los ingredientes se nota. Mi familia y yo somos fans de Shori Express."</p>
+                <div class="landing-testimonial-author">
+                    <div class="landing-testimonial-avatar">LP</div>
+                    <div>
+                        <strong>Laura P.</strong>
+                        <span>Cliente frecuente</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section" id="contacto">
+    <div class="landing-container">
+        <div class="landing-cta-box">
+            <h2>¿Listo para ordenar?</h2>
+            <p>Crea tu cuenta gratis y empieza a disfrutar del mejor sabor con entrega rápida a tu puerta.</p>
+            <div class="landing-cta-actions">
+                {% if usuario_logueado %}
+                    {% if es_admin %}
+                        <a href="{% url 'home' %}" class="se-btn se-btn-primary se-btn-lg">Ir al Dashboard</a>
+                    {% else %}
+                        <a href="{% url 'menu_publico' %}" class="se-btn se-btn-primary se-btn-lg">🍔 Ver menú completo</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'register' %}" class="se-btn se-btn-primary se-btn-lg">Crear Cuenta Gratis</a>
+                    <a href="{% url 'login' %}" class="se-btn se-btn-outline se-btn-lg" style="border-color: rgba(255,255,255,0.3); color: #fff;">Ya tengo cuenta</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="landing-contact-grid">
+            <div class="landing-contact-card">
+                <div class="landing-contact-icon">📍</div>
+                <h4>Ubicación</h4>
+                <p>Calle Principal #123<br>Ciudad, Colombia</p>
+            </div>
+            <div class="landing-contact-card">
+                <div class="landing-contact-icon">📞</div>
+                <h4>Teléfono</h4>
+                <p>+57 300 123 4567<br>Lun - Dom: 10am - 10pm</p>
+            </div>
+            <div class="landing-contact-card">
+                <div class="landing-contact-icon">✉️</div>
+                <h4>Correo</h4>
+                <p>info@shoriexpress.com<br>pedidos@shoriexpress.com</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="landing-footer">
+    <div class="landing-container">
+        <div class="landing-footer-inner">
+            <div class="landing-footer-brand">
+                <span class="brand-icon">SE</span>
+                <span>Shori Express</span>
+            </div>
+            <p class="landing-footer-text">© 2025 Shori Express. Todos los derechos reservados.</p>
+            <div class="landing-footer-links">
+                <a href="#hero">Inicio</a>
+                <a href="{% url 'menu_publico' %}">Menú</a>
+                <a href="#nosotros">Nosotros</a>
+                <a href="#contacto">Contacto</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+{% if messages %}
+<div style="position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 400px;">
+    {% for message in messages %}
+    <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% elif message.tags == 'warning' %}se-alert-error{% else %}se-alert-info{% endif %}"
+        style="margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: fadeInUp 0.3s ease-out;"
+        id="msg-{{ forloop.counter }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    setTimeout(function() {
+        document.querySelectorAll('[id^="msg-"]').forEach(function(el) {
+            el.style.transition = 'opacity 0.5s ease';
+            el.style.opacity = '0';
+            setTimeout(function() { el.remove(); }, 500);
+        });
+    }, 5000);
+</script>
+{% endif %}
+
+<script>
+    // Cart animation
+    function animateCart() {
+        const cartIcon = document.getElementById('cart-icon-nav');
+        if (cartIcon) {
+            cartIcon.classList.add('cart-animate');
+            setTimeout(() => { cartIcon.classList.remove('cart-animate'); }, 600);
+        }
+    }
+
+    window.addEventListener('load', () => {
+        const messages = document.querySelectorAll('.se-alert-success');
+        messages.forEach(msg => {
+            if (msg.innerText.toLowerCase().includes('agregado')) {
+                animateCart();
+            }
+        });
+    });
+
+    // Navbar scroll effect
+    const nav = document.getElementById('landingNav');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    });
+
+    // Mobile menu toggle
+    const hamburger = document.getElementById('hamburgerBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        mobileMenu.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.landing-mobile-link').forEach(link => {
+        link.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('open');
+        });
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // Scroll animations
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.landing-feature-card, .landing-menu-card, .landing-testimonial-card, .landing-contact-card, .landing-about-card').forEach(el => {
+        el.classList.add('animate-on-scroll');
+        observer.observe(el);
+    });
+
+    // Theme
+    (function() {
+        const saved = localStorage.getItem('shori-theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+</script>
+
+</body>
+</html>
