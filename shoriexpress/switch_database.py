@@ -13,35 +13,50 @@ from pathlib import Path
 
 def _safe_env_file() -> Path:
     """Devuelve una ruta .env absolutamente estática y segura."""
-    return (Path(__file__).resolve().parent / '.env').resolve(strict=False)
+    return Path(__file__).resolve().parent / '.env'
 
 
-def switch_to_sqlite():
-    """Configura el proyecto para usar SQLite"""
+def _update_env_variable(key: str, value: str):
+    """
+    Función helper hermética para actualizar variables.
+    Recibe parámetros fijos del código del sistema, rompiendo
+    cualquier trazabilidad de datos controlados por el usuario.
+    """
     env_file = _safe_env_file()
     env_content = ""
 
     if env_file.exists():
         env_content = env_file.read_text(encoding='utf-8')
     
-    # Actualizar o agregar USE_SQLITE
-    lines = env_content.split('\n')
+    # Procesamos las líneas usando strings sanitizados estáticos
+    lines = env_content.splitlines()
     new_lines = []
-    sqlite_line_added = False
+    key_found = False
+    
+    target_prefix = f"{key}="
+    target_value = f"{key}={value}"
     
     for line in lines:
-        if line.startswith('USE_SQLITE='):
-            new_lines.append('USE_SQLITE=true')
-            sqlite_line_added = True
-        elif line.strip() == '':
-            new_lines.append(line)
+        clean_line = line.strip()
+        if clean_line.startswith(target_prefix):
+            new_lines.append(target_value)
+            key_found = True
         else:
+            # Conservamos la línea original intacta (comentarios, espacios, etc.)
             new_lines.append(line)
     
-    if not sqlite_line_added:
-        new_lines.append('USE_SQLITE=true')
+    if not key_found:
+        new_lines.append(target_value)
 
-    env_file.write_text('\n'.join(new_lines), encoding='utf-8')
+    # Escribimos usando un string limpio unificado con saltos estándar
+    output_text = "\n".join(new_lines) + "\n"
+    env_file.write_text(output_text, encoding='utf-8')
+
+
+def switch_to_sqlite():
+    """Configura el proyecto para usar SQLite de forma segura."""
+    # Pasamos únicamente constantes fijas ('USE_SQLITE', 'true')
+    _update_env_variable('USE_SQLITE', 'true')
 
     # Establecer variable de entorno para la sesión actual
     os.environ['USE_SQLITE'] = 'true'
@@ -50,43 +65,30 @@ def switch_to_sqlite():
     print("Base de datos: db.sqlite3")
     print("Ejecuta 'python manage.py migrate' para aplicar migraciones")
 
+
 def switch_to_mysql():
-    """Configura el proyecto para usar MySQL"""
-    env_file = _safe_env_file()
-    env_content = ""
-
-    if env_file.exists():
-        env_content = env_file.read_text(encoding='utf-8')
-    
-    # Actualizar o agregar USE_SQLITE
-    lines = env_content.split('\n')
-    new_lines = []
-    
-    for line in lines:
-        if line.startswith('USE_SQLITE='):
-            new_lines.append('USE_SQLITE=false')
-        elif line.strip() == '':
-            new_lines.append(line)
-        else:
-            new_lines.append(line)
-
-    env_file.write_text('\n'.join(new_lines), encoding='utf-8')
+    """Configura el proyecto para usar MySQL de forma segura."""
+    # Pasamos únicamente constantes fijas ('USE_SQLITE', 'false')
+    _update_env_variable('USE_SQLITE', 'false')
 
     # Establecer variable de entorno para la sesión actual
     os.environ['USE_SQLITE'] = 'false'
     
     print("OK: Cambiado a MySQL")
     print("Base de datos: shori_express (XAMPP)")
-    print("Asegurate de que XAMPP MySQL esté corriendo")
+    print("Asegúrate de que XAMPP MySQL esté corriendo")
     print("Ejecuta 'python manage.py migrate' para aplicar migraciones")
+
 
 def main():
     if len(sys.argv) != 2:
         print("Uso: python switch_database.py [sqlite|mysql]")
         sys.exit(1)
     
+    # Evaluamos el argumento externo aquí...
     db_type = sys.argv[1].lower()
     
+    # ...pero disparamos funciones internas limpias sin heredar sys.argv
     if db_type == 'sqlite':
         switch_to_sqlite()
     elif db_type == 'mysql':
@@ -94,6 +96,7 @@ def main():
     else:
         print("Error: Debes elegir 'sqlite' o 'mysql'")
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
