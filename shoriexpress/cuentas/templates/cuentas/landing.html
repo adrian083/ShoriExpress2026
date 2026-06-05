@@ -130,7 +130,7 @@
         <div class="landing-menu-grid">
             {% if productos %}
                 {% for producto in productos %}
-                <div class="landing-menu-card">
+                <article class="landing-menu-card" aria-label="Producto {{ producto.nombre_producto }}">
                     <div class="landing-menu-img">
                         <img src="{{ producto|producto_imagen_url }}" alt="{{ producto.nombre_producto }}" loading="lazy"
                             onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
@@ -149,7 +149,7 @@
                             </a>
                         </div>
                     </div>
-                </div>
+                </article>
                 {% endfor %}
             {% else %}
                 <p style="text-align: center; color: var(--text-secondary); grid-column: 1/-1;">No hay productos disponibles en este momento.</p>

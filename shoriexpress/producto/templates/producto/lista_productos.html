@@ -23,7 +23,7 @@
 
 <div class="se-products-grid" id="productsGrid">
     {% for p in productos %}
-    <div class="se-product-card" data-nombre="{{ p.nombre_producto|lower }}" data-desc="{{ p.descripcion_producto|lower|default:'' }}">
+    <article class="se-product-card" data-nombre="{{ p.nombre_producto|lower }}" data-desc="{{ p.descripcion_producto|lower|default:'' }}" aria-label="Producto {{ p.nombre_producto }}">
         
         <img src="{{ p|producto_imagen_url }}" alt="{{ p.nombre_producto }}"
              loading="lazy"
@@ -46,7 +46,7 @@
                 </button>
             </form>
         </div>
-    </div>
+    </article>
     {% empty %}
     <div class="se-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;" id="emptyProducts">
         <div class="empty-icon" style="font-size: 3rem;">🍔</div>

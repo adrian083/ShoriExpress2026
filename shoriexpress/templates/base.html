@@ -35,7 +35,7 @@
 </head>
 <body>
 
-<div class="se-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="se-overlay" id="sidebarOverlay" onclick="closeSidebar()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeSidebar(); }" role="button" tabindex="0" aria-label="Cerrar menú lateral"></div>
 
 <aside class="se-sidebar" id="sidebar">
     <div class="se-sidebar-header">

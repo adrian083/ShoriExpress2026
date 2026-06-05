@@ -59,7 +59,7 @@
 
     <div class="menu-grid-container" id="menuGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;">
         {% for producto in productos %}
-        <div class="product-card" data-category="{{ producto.categoria|slugify }}">
+        <article class="product-card" data-category="{{ producto.categoria|slugify }}" aria-label="Producto {{ producto.nombre_producto }}">
             <div class="product-image-wrapper" style="position: relative; height: 180px;">
                 <img src="{{ producto|producto_imagen_url }}" alt="{{ producto.nombre_producto }}" style="width:100%; height:100%; object-fit:cover; border-radius: 15px 15px 0 0;"
                     onerror="this.onerror=null;this.src='{% static 'productos/placeholder.svg' %}';">
@@ -72,7 +72,7 @@
                     <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm">Añadir</a>
                 </div>
             </div>
-        </div>
+        </article>
         {% empty %}
             <p style="text-align: center; grid-column: 1/-1;">No hay productos cargados en la base de datos.</p>
         {% endfor %}
