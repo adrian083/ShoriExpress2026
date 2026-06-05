@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from django.db import transaction
+from django.db import transaction, connection
 from datetime import datetime, timedelta
 from django.http import JsonResponse, FileResponse, HttpResponse
 from django.db.models import Sum, Count, Q, F, DecimalField
@@ -557,16 +557,23 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
             tables = [table[0] for table in cursor.fetchall()]
             
             for table in tables:
-                f.write(f"-- Estructura de tabla: {table}\n")
-                f.write(f"DROP TABLE IF EXISTS `{table}`;\n")
-                
+                safe_table = ''.join(ch for ch in table if ch.isalnum() or ch == '_')
+                if not safe_table or safe_table != table:
+                    continue
+
+                quoted_table = connection.ops.quote_name(safe_table)
+                safe_identifier = quoted_table
+
+                f.write(f"-- Estructura de tabla: {safe_table}\n")
+                f.write(f"DROP TABLE IF EXISTS {safe_identifier};\n")
+
                 # Obtener estructura CREATE TABLE
-                cursor.execute(f"SHOW CREATE TABLE `{table}`")
+                cursor.execute("SHOW CREATE TABLE " + safe_identifier)
                 create_table = cursor.fetchone()[1]
                 f.write(create_table + ";\n\n")
-                
+
                 # Obtener datos
-                cursor.execute(f"SELECT * FROM `{table}`")
+                cursor.execute("SELECT * FROM " + safe_identifier)
                 rows = cursor.fetchall()
                 columns = [desc[0] for desc in cursor.description]
                 
@@ -583,7 +590,7 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
                                 # Escapar comillas y caracteres especiales
                                 escaped = str(value).replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n').replace('\r', '\\r')
                                 values.append(f"'{escaped}'")
-                        f.write(f"INSERT INTO `{table}` VALUES ({', '.join(values)});\n")
+                        f.write(f"INSERT INTO {quoted_table} VALUES ({', '.join(values)});\n")
                     f.write("\n")
                 
                 f.write("-- Fin de tabla\n\n")
