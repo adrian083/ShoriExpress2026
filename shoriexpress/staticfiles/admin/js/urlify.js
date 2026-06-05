@@ -163,7 +163,12 @@
         s = s.trim(); // trim leading/trailing spaces
         s = s.replace(/[-\s]+/g, '-'); // convert spaces to hyphens 
         s = s.substring(0, num_chars); // trim to first num_chars chars
-        return s.replace(/-+$/g, ''); // trim any trailing hyphens
+
+        // Safely trim trailing hyphens without using a regex that can trigger ReDoS.
+        while (s.length > 0 && s[s.length - 1] === '-') {
+            s = s.slice(0, -1);
+        }
+        return s;
     }
     window.URLify = URLify;
 }
