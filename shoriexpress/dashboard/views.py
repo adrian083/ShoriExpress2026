@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from django.db import transaction, connection
+from django.db import transaction
 from datetime import datetime, timedelta
 from django.http import JsonResponse, FileResponse, HttpResponse
 from django.db.models import Sum, Count, Q, F, DecimalField
@@ -561,19 +561,18 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
                 if not safe_table or safe_table != table:
                     continue
 
-                quoted_table = connection.ops.quote_name(safe_table)
-                safe_identifier = quoted_table
+                safe_identifier = connection.ops.quote_name(safe_table)
 
                 f.write(f"-- Estructura de tabla: {safe_table}\n")
-                f.write(f"DROP TABLE IF EXISTS {safe_identifier};\n")
+                f.write("DROP TABLE IF EXISTS {0};\n".format(safe_identifier))
 
                 # Obtener estructura CREATE TABLE
-                cursor.execute("SHOW CREATE TABLE " + safe_identifier)
+                cursor.execute("SHOW CREATE TABLE {0}".format(safe_identifier))
                 create_table = cursor.fetchone()[1]
                 f.write(create_table + ";\n\n")
 
                 # Obtener datos
-                cursor.execute("SELECT * FROM " + safe_identifier)
+                cursor.execute("SELECT * FROM {0}".format(safe_identifier))
                 rows = cursor.fetchall()
                 columns = [desc[0] for desc in cursor.description]
                 
@@ -590,7 +589,7 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
                                 # Escapar comillas y caracteres especiales
                                 escaped = str(value).replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n').replace('\r', '\\r')
                                 values.append(f"'{escaped}'")
-                        f.write(f"INSERT INTO {quoted_table} VALUES ({', '.join(values)});\n")
+                        f.write(f"INSERT INTO `{table}` VALUES ({', '.join(values)});\n")
                     f.write("\n")
                 
                 f.write("-- Fin de tabla\n\n")
