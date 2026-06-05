@@ -2,11 +2,25 @@ import os
 import MySQLdb
 
 # Configuración de la base de datos
+def _load_env_file(path):
+    if not os.path.exists(path):
+        return
+    for raw_line in open(path, encoding='utf-8').read().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_env_file('.env')
+
+
 db_config = {
     "host": os.environ.get("MYSQL_HOST", "127.0.0.1"),
     "port": int(os.environ.get("MYSQL_PORT", "3307")),
     "user": os.environ.get("MYSQL_USER", "root"),
-    "password": os.environ.get("MYSQL_PASSWORD", "567422"),
+    "password": os.environ.get("MYSQL_PASSWORD", ""),
     "database": os.environ.get("MYSQL_DATABASE", "shori_express"),
 }
 

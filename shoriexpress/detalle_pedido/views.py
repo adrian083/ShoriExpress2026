@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib import messages
 from decimal import Decimal, InvalidOperation
 
@@ -11,6 +12,7 @@ from .models import DetallePedido
 
 
 @super_admin_required
+@require_GET
 def lista_detalles(request):
     """
     Lista todos los detalles de pedido con opción de filtrado por:
@@ -58,6 +60,7 @@ def lista_detalles(request):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def crear_detalle(request):
     from inventario.services import InventoryService
     
@@ -158,6 +161,7 @@ def crear_detalle(request):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def editar_detalle(request, id):
     detalle = get_object_or_404(DetallePedido, pk=id)
     pedidos = Pedido.objects.all()
@@ -192,6 +196,7 @@ def editar_detalle(request, id):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def eliminar_detalle(request, id):
     detalle = get_object_or_404(DetallePedido, pk=id)
     if request.method == 'POST':

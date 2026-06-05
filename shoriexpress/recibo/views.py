@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.db.models import DecimalField, F, Sum
@@ -18,6 +19,7 @@ from .models import Recibo
 
 
 @super_admin_required
+@require_GET
 def lista_recibos(request):
     """Lista todos los recibos/facturas con búsqueda y filtros"""
     recibos = Recibo.objects.select_related('pedido', 'metodo_pago', 'pedido__usuario').all().order_by('-fecha_emision')
@@ -52,6 +54,7 @@ def detalle_recibo(request, id):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def crear_recibo(request):
     """Crea un nuevo recibo para un pedido existente"""
     pedidos = Pedido.objects.filter(recibo__isnull=True).order_by("-pk")
@@ -112,6 +115,7 @@ def crear_recibo(request):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def editar_recibo(request, id):
     """Edita un recibo existente"""
     recibo = get_object_or_404(Recibo, pk=id)
@@ -160,6 +164,7 @@ def editar_recibo(request, id):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def eliminar_recibo(request, id):
     """Elimina un recibo (operación crítica)"""
     recibo = get_object_or_404(Recibo, pk=id)
@@ -172,6 +177,7 @@ def eliminar_recibo(request, id):
 
 
 @super_admin_required
+@require_GET
 def descargar_factura_pdf(request, id):
     """Descarga factura en PDF"""
     recibo = get_object_or_404(
@@ -230,6 +236,7 @@ def descargar_factura_pdf(request, id):
 
 
 @super_admin_required
+@require_GET
 def descargar_reporte_recibos_pdf(request):
     """Descarga reporte general de recibos en PDF"""
     recibos = Recibo.objects.select_related('pedido', 'metodo_pago', 'pedido__usuario').all().order_by('-id')

@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 
 from cuentas.views import admin_shori_required
 from inventario.models import Inventario
@@ -12,6 +13,7 @@ from .models import Receta
 
 
 @admin_shori_required
+@require_GET
 def lista_recetas(request):
     recetas = Receta.objects.select_related('producto', 'insumo').all()
 
@@ -37,6 +39,7 @@ def lista_recetas(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_receta(request):
     productos = Producto.objects.all()
     insumos = Inventario.objects.all()
@@ -101,6 +104,7 @@ def crear_receta(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_receta(request, id):
     receta = get_object_or_404(Receta, pk=id)
     productos = Producto.objects.all()
@@ -136,6 +140,7 @@ def editar_receta(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_receta(request, id):
     receta = get_object_or_404(Receta, pk=id)
     if request.method == 'POST':

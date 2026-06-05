@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 
 from cuentas.views import admin_shori_required
 
@@ -8,12 +9,14 @@ from .models import MetodoPago
 
 
 @admin_shori_required
+@require_GET
 def lista_metodos(request):
     metodos = MetodoPago.objects.all()
     return render(request, 'metodo_pago/lista_metodos.html', {'metodos': metodos})
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_metodo(request):
     if request.method == 'POST':
         nombre = (request.POST.get('nombre') or '').strip()
@@ -37,6 +40,7 @@ def crear_metodo(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_metodo(request, id):
     metodo = get_object_or_404(MetodoPago, pk=id)
     if request.method == 'POST':
@@ -59,6 +63,7 @@ def editar_metodo(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_metodo(request, id):
     metodo = get_object_or_404(MetodoPago, pk=id)
     if request.method == 'POST':

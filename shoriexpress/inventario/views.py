@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -33,6 +34,7 @@ def _to_decimal_strict(val, label):
 
 
 @admin_shori_required
+@require_GET
 def lista_inventario(request):
     insumos = Inventario.objects.all().prefetch_related("lotes")
     total_valor_inventario = sum(
@@ -46,6 +48,7 @@ def lista_inventario(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_insumo(request):
     if request.method == "POST":
         uid = request.session.get("usuario_id")
@@ -113,6 +116,7 @@ def crear_insumo(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_insumo(request, id):
     insumo = get_object_or_404(Inventario, pk=id)
     if request.method == "POST":
@@ -165,6 +169,7 @@ def editar_insumo(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_insumo(request, id):
     insumo = get_object_or_404(Inventario, pk=id)
     if request.method == "POST":
@@ -174,6 +179,7 @@ def eliminar_insumo(request, id):
 
 
 @admin_shori_required
+@require_GET
 def descargar_inventario_pdf(request):
     insumos = Inventario.objects.all().prefetch_related("lotes").order_by("nombre_insumo")
     context = {

@@ -10,13 +10,32 @@ import os
 import sys
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def _safe_env_file() -> Path:
+    """Devuelve una ruta .env validada y confinada al directorio del proyecto."""
+    candidate = (BASE_DIR / '.env').resolve()
+    safe_name = os.path.basename(str(candidate))
+
+    if safe_name != '.env':
+        raise ValueError('Ruta de entorno no válida.')
+
+    try:
+        candidate.relative_to(BASE_DIR.resolve())
+    except ValueError as exc:
+        raise ValueError('Ruta fuera del directorio permitido.') from exc
+
+    return candidate
+
+
 def switch_to_sqlite():
     """Configura el proyecto para usar SQLite"""
-    env_file = Path('.env')
+    env_file = _safe_env_file()
     env_content = ""
-    
+
     if env_file.exists():
-        env_content = env_file.read_text()
+        env_content = env_file.read_text(encoding='utf-8')
     
     # Actualizar o agregar USE_SQLITE
     lines = env_content.split('\n')
@@ -34,9 +53,9 @@ def switch_to_sqlite():
     
     if not sqlite_line_added:
         new_lines.append('USE_SQLITE=true')
-    
-    env_file.write_text('\n'.join(new_lines))
-    
+
+    env_file.write_text('\n'.join(new_lines), encoding='utf-8')
+
     # Establecer variable de entorno para la sesión actual
     os.environ['USE_SQLITE'] = 'true'
     
@@ -46,11 +65,11 @@ def switch_to_sqlite():
 
 def switch_to_mysql():
     """Configura el proyecto para usar MySQL"""
-    env_file = Path('.env')
+    env_file = _safe_env_file()
     env_content = ""
-    
+
     if env_file.exists():
-        env_content = env_file.read_text()
+        env_content = env_file.read_text(encoding='utf-8')
     
     # Actualizar o agregar USE_SQLITE
     lines = env_content.split('\n')
@@ -63,9 +82,9 @@ def switch_to_mysql():
             new_lines.append(line)
         else:
             new_lines.append(line)
-    
-    env_file.write_text('\n'.join(new_lines))
-    
+
+    env_file.write_text('\n'.join(new_lines), encoding='utf-8')
+
     # Establecer variable de entorno para la sesión actual
     os.environ['USE_SQLITE'] = 'false'
     

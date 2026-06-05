@@ -8,17 +8,30 @@ import os
 import sys
 from pathlib import Path
 
+
+def _load_env_file(path: Path) -> None:
+    """Cargar variables desde .env sin sobrescribir valores ya existentes."""
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+_load_env_file(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # En producción: exporta DJANGO_SECRET_KEY y DJANGO_DEBUG=false
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-aog_(428n7alm0sr80vu3ulqw*(npq00z_xca98wyo7xgoxonh",
-)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("DJANGO_SECRET_KEY debe configurarse en el entorno o en .env.")
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in ("1", "true", "yes")
 
@@ -93,7 +106,7 @@ MYSQL_DEFAULTS = {
     "ENGINE": "django.db.backends.mysql",
     "NAME": os.environ.get("MYSQL_DATABASE", "shori_express"),
     "USER": os.environ.get("MYSQL_USER", "root"),
-    "PASSWORD": os.environ.get("MYSQL_PASSWORD", "567422"),
+    "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
     "HOST": os.environ.get("MYSQL_HOST", "localhost"),
     "PORT": os.environ.get("MYSQL_PORT", "3306"),
     "OPTIONS": {

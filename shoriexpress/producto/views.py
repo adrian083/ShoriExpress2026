@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from decimal import Decimal
 
 from cuentas.views import admin_shori_required
@@ -28,6 +28,7 @@ def _max_unidades_por_inventario(producto):
     return max(0, min(maximos))
 
 
+@require_GET
 def api_configuracion_horario(request):
     """
     API endpoint para obtener configuración de horario comercial
@@ -46,6 +47,7 @@ def api_configuracion_horario(request):
         }, status=400)
 
 
+@require_POST
 def agregar_item(request, producto_id):
     """
     Agrega un producto al carrito con validación de horario
@@ -86,6 +88,7 @@ def agregar_item(request, producto_id):
     return redirect('landing')
 
 
+@require_POST
 def eliminar_item(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
@@ -93,6 +96,7 @@ def eliminar_item(request, producto_id):
     return redirect('ver_carrito')
 
 
+@require_POST
 def restar_producto(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
@@ -111,12 +115,14 @@ def limpiar_carrito(request):
     return redirect('ver_carrito')
 
 
+@require_GET
 def index(request):
     productos = Producto.objects.filter(esta_disponible=True, esta_habilitado=True)
     return render(request, 'index.html', {'productos': productos})
 
 
 @admin_shori_required
+@require_GET
 def lista_productos(request):
     productos = Producto.objects.all()
     return render(request, 'producto/lista_productos.html', {'productos': productos})
@@ -133,6 +139,7 @@ def toggle_disponible(request, producto_id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_producto(request):
     from_receta = request.GET.get('from_receta', '')
 
@@ -166,6 +173,7 @@ def crear_producto(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_producto(request, id):
     producto = get_object_or_404(Producto, pk=id)
 
@@ -190,6 +198,7 @@ def editar_producto(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_producto(request, id):
     producto = get_object_or_404(Producto, pk=id)
     if request.method == 'POST':

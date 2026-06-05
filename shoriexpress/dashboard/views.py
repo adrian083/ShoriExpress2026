@@ -13,6 +13,7 @@ from django.db.models.functions import TruncDate, TruncMonth, Coalesce
 from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from cuentas.views import admin_shori_required, super_admin_required
 
@@ -26,6 +27,7 @@ from movimiento_inventario.models import MovimientoInventario
 
 
 @admin_shori_required
+@require_GET
 def dashboard_data_api(request):
     """API endpoint that returns all dashboard statistics as JSON.
     Supports date filtering via GET params: fecha_inicio, fecha_fin
@@ -196,6 +198,7 @@ def _nombre_normalizado(val):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def carga_masiva(request):
     
     resumen = None
@@ -365,6 +368,7 @@ def carga_masiva(request):
 
 
 @super_admin_required
+@require_http_methods(["GET", "POST"])
 def ver_configuracion(request):
     """Listado y edición de configuración del sistema."""
     from dashboard.models import ConfiguracionSistema
@@ -402,6 +406,7 @@ def ver_configuracion(request):
 
 
 @admin_shori_required
+@require_GET
 def nuevos_pedidos_api(request):
     ultimo = Pedido.objects.order_by("-id").values(
         "id", "estado_pedido", "fecha_pedido", "usuario__primer_nombre"
@@ -439,6 +444,15 @@ def _backup_folder():
     backups_dir = base_dir / 'db_backups'
     backups_dir.mkdir(parents=True, exist_ok=True)
     return backups_dir
+
+
+def _resolve_allowed_path(base_dir: Path, value: str) -> Path:
+    """Resuelve una ruta sólo dentro del directorio base permitido."""
+    candidate = Path(value).expanduser()
+    resolved = candidate.resolve() if candidate.is_absolute() else (base_dir / candidate).resolve()
+    base = base_dir.resolve()
+    resolved.relative_to(base)
+    return resolved
 
 
 def _try_mysqldump_backup(request, database, backups_dir, backup_nombre):
@@ -589,6 +603,7 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
 
 
 @super_admin_required
+@require_GET
 def lista_respaldos(request):
     backups_dir = _backup_folder()
     archivos = sorted(
@@ -610,6 +625,7 @@ def lista_respaldos(request):
 
 
 @super_admin_required
+@require_POST
 def crear_respaldo(request):
     if request.method != 'POST':
         return redirect('lista_respaldos')
@@ -633,8 +649,13 @@ def crear_respaldo(request):
             messages.error(request, 'No se encontró la configuración de la base de datos.')
             return redirect('lista_respaldos')
 
-        archivo_origen = Path(nombre_db)
-        if not archivo_origen.exists():
+        try:
+            archivo_origen = _resolve_allowed_path(Path(__file__).resolve().parents[1], str(nombre_db))
+        except (ValueError, OSError, RuntimeError):
+            messages.error(request, 'Ruta de base de datos no válida.')
+            return redirect('lista_respaldos')
+
+        if not archivo_origen.exists() or not archivo_origen.is_file():
             messages.error(request, 'Archivo de base de datos no encontrado.')
             return redirect('lista_respaldos')
 
@@ -663,14 +684,18 @@ def crear_respaldo(request):
 
 
 @super_admin_required
+@require_GET
 def descargar_respaldo(request, filename):
     backups_dir = _backup_folder()
-    safe_name = os.path.basename(filename)
-    if safe_name != filename or '..' in filename:
+    raw_name = str(filename or '').strip()
+    safe_name = os.path.basename(raw_name)
+
+    if not safe_name or safe_name in {'.', '..'} or safe_name != raw_name:
         messages.error(request, 'Nombre de archivo no válido.')
         return redirect('lista_respaldos')
-    ruta = (backups_dir / safe_name).resolve()
+
     try:
+        ruta = _resolve_allowed_path(backups_dir, safe_name)
         ruta.relative_to(backups_dir.resolve())
     except ValueError:
         messages.error(request, 'Ruta no permitida.')

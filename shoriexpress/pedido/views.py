@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from cuentas.views import admin_shori_required, login_shori_required
 from detalle_pedido.models import DetallePedido
@@ -33,6 +34,7 @@ DESCUENTO_REDENCION = Decimal("0.05")
 
 
 @login_shori_required
+@require_GET
 def ver_checkout(request):
     """Muestra el resumen final antes de procesar la compra."""
     cart = Cart(request)
@@ -57,6 +59,7 @@ def ver_checkout(request):
 
 
 @login_shori_required
+@require_POST
 def finalizar_compra(request):
     """Crea el pedido, detalles, recibo de pago y bonos según el total."""
     cart = Cart(request)
@@ -250,6 +253,7 @@ def finalizar_compra(request):
 
 
 @admin_shori_required
+@require_POST
 def cambiar_estado(request, pedido_id):
     """Permite actualizar el estado del pedido."""
     pedido = get_object_or_404(Pedido, pk=pedido_id)
@@ -268,6 +272,7 @@ def cambiar_estado(request, pedido_id):
 
 
 @admin_shori_required
+@require_GET
 def lista_pedidos(request):
     pedidos = list(Pedido.objects.select_related('usuario').all().order_by('-pk'))
     ahora = timezone.now()
@@ -313,6 +318,7 @@ def lista_pedidos(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_pedido(request):
     usuarios = Usuario.objects.all()
     if request.method == 'POST':
@@ -338,6 +344,7 @@ def crear_pedido(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_pedido(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
     usuarios = Usuario.objects.all()
@@ -360,6 +367,7 @@ def editar_pedido(request, pk):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_pedido(request, id):
     pedido = get_object_or_404(Pedido, pk=id)
     if request.method == 'POST':
@@ -370,6 +378,7 @@ def eliminar_pedido(request, id):
 
 
 @admin_shori_required
+@require_GET
 def descargar_pedidos_pdf(request):
     pedidos = Pedido.objects.select_related('usuario').all().order_by('-pk')
     context = {

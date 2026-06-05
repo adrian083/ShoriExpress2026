@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib import messages
 from django.db import transaction
 from decimal import Decimal, InvalidOperation
@@ -37,12 +38,14 @@ def _validar_y_parsear_cantidad(raw):
     return cantidad
 
 @admin_shori_required
+@require_GET
 def lista_movimientos(request):
     movimientos = MovimientoInventario.objects.select_related('insumo', 'usuario').all().order_by('-fecha_movimiento')
     return render(request, 'movimiento_inventario/lista_movimientos.html', {'movimientos': movimientos})
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_movimiento(request):
     insumos = Inventario.objects.all()
     usuarios = Usuario.objects.all()
@@ -117,6 +120,7 @@ def crear_movimiento(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_movimiento(request, id):
     movimiento = get_object_or_404(MovimientoInventario, pk=id)
     insumos = Inventario.objects.all()
@@ -209,6 +213,7 @@ def editar_movimiento(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_movimiento(request, id):
     movimiento = get_object_or_404(MovimientoInventario, pk=id)
     if request.method == 'POST':

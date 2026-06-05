@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.http import require_GET, require_http_methods
 
 from cuentas.password_utils import hash_password, password_coincide
 from cuentas.views import admin_shori_required, login_shori_required
@@ -12,6 +13,7 @@ from rol.models import Rol
 
 
 @login_shori_required
+@require_http_methods(["GET", "POST"])
 def mi_cuenta(request, id):
     """Vista de perfil/cuenta personal para el usuario."""
     sesion_id = request.session.get("usuario_id")
@@ -106,12 +108,14 @@ def mi_cuenta(request, id):
 
 
 @admin_shori_required
+@require_GET
 def lista_usuarios(request):
     usuarios = Usuario.objects.select_related('rol').all()
     return render(request, 'usuario/lista_usuarios.html', {'usuarios': usuarios})
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def crear_usuario(request):
     roles = Rol.objects.all()
 
@@ -157,6 +161,7 @@ def crear_usuario(request):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def editar_usuario(request, id):
     usuario = get_object_or_404(Usuario, pk=id)
     roles = Rol.objects.all()
@@ -207,6 +212,7 @@ def editar_usuario(request, id):
 
 
 @admin_shori_required
+@require_http_methods(["GET", "POST"])
 def eliminar_usuario(request, id):
     usuario = get_object_or_404(Usuario, pk=id)
     if request.method == 'POST':

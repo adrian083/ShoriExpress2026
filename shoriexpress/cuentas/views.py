@@ -11,6 +11,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from metodo_pago.models import MetodoPago
 from producto.cart import Cart
@@ -96,6 +97,7 @@ def _redirect_seguro_tras_login(request, default_name='landing'):
     return redirect(default_name)
 
 
+@require_GET
 def landing(request):
     """Página comercial pública con secciones informativas."""
     try:
@@ -118,6 +120,7 @@ def landing(request):
     })
 
 
+@require_GET
 def ver_carrito(request):
     """Vista para visualizar los productos agregados al carrito."""
     usuario_logueado = _get_usuario_sesion(request)
@@ -148,6 +151,7 @@ def ver_carrito(request):
     })
 
 
+@require_GET
 def ver_menu_publico(request):
     """Página dedicada al menú (productos disponibles)."""
     try:
@@ -168,6 +172,7 @@ def ver_menu_publico(request):
     })
 
 
+@require_GET
 def api_hora_bogota(request):
     """Consume la API pública de hora (America/Bogotá) para tiempos de entrega en el cliente."""
     try:
@@ -193,6 +198,7 @@ def api_hora_bogota(request):
             "source": "fallback",
         })
 
+@require_http_methods(["GET", "POST"])
 def login_view(request):
     """Vista de inicio de sesión con soporte para redirección inteligente."""
     # Si ya está logueado, redirigir según rol o al 'next' seguro
@@ -276,6 +282,7 @@ def login_view(request):
     })
 
 
+@require_http_methods(["GET", "POST"])
 def recuperar_contrasena(request):
     """Permite recuperar y renovar la contraseña mediante correo y documento."""
     if request.method == 'POST':
@@ -313,6 +320,7 @@ def recuperar_contrasena(request):
     return render(request, 'cuentas/recuperar_contrasena.html')
 
 
+@require_http_methods(["GET", "POST"])
 def register_view(request):
     """Vista de registro de nuevos usuarios."""
     if request.session.get('usuario_id'):
@@ -416,6 +424,7 @@ def register_view(request):
     return render(request, 'cuentas/register.html')
 
 
+@require_POST
 def logout_view(request):
     """Cerrar sesión."""
     request.session.flush()
@@ -495,6 +504,7 @@ def super_admin_required(view_func):
 
 
 @login_shori_required
+@require_GET
 def mis_pedidos(request):
     from pedido.models import Pedido
     usuario_id = request.session.get('usuario_id')
@@ -506,6 +516,7 @@ def mis_pedidos(request):
     })
 
 @login_shori_required
+@require_GET
 def detalle_pedido(request, pedido_id):
     from pedido.models import Pedido
     from detalle_pedido.models import DetallePedido
