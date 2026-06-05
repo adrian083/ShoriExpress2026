@@ -462,6 +462,292 @@ a:hover {
 }
 
 /* ============================================================
+   FACTURA / RECEIPT DETAIL
+   ============================================================ */
+.factura-page-header {
+  align-items: flex-start;
+}
+
+.factura-page-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.factura-back-btn {
+  padding: 8px 12px;
+}
+
+.factura-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.factura-container {
+  max-width: 900px;
+  margin: 24px auto;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: transparent;
+}
+
+.factura-header,
+.factura-body,
+.factura-footer {
+  background: var(--bg-card);
+  transition: var(--transition);
+}
+
+.factura-header {
+  padding: 32px;
+  border-bottom: 2px solid var(--brand-red);
+}
+
+.factura-header-grid,
+.factura-entity-grid,
+.factura-footer-grid,
+.factura-extra-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.factura-header-grid {
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 24px;
+}
+
+.factura-meta-right {
+  text-align: right;
+}
+
+.factura-label,
+.factura-extra-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 4px;
+}
+
+.factura-label-upper {
+  text-transform: uppercase;
+}
+
+.factura-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--brand-red);
+  margin: 0;
+}
+
+.factura-meta-value,
+.factura-entity-name,
+.factura-payment-name,
+.factura-extra-value {
+  font-weight: 600;
+}
+
+.factura-meta-value {
+  font-size: 1.1rem;
+}
+
+.factura-entity-grid {
+  grid-template-columns: repeat(2, 1fr);
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.factura-body {
+  padding: 32px;
+}
+
+.factura-section-title {
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.factura-table-wrap {
+  overflow-x: auto;
+}
+
+.factura-table {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.factura-table-head {
+  background: var(--bg-table-header);
+}
+
+.factura-product-name {
+  font-weight: 600;
+}
+
+.factura-subtotal {
+  font-weight: 600;
+}
+
+.factura-stock-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.factura-stock-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.factura-note {
+  background: var(--color-warning-bg);
+  border-left: 4px solid var(--color-warning);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+
+.factura-note-text,
+.factura-product-desc,
+.factura-entity-detail,
+.factura-payment-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.factura-footer {
+  background: var(--bg-table-row-alt);
+  padding: 32px;
+  border-top: 2px solid var(--border-color);
+}
+
+.factura-footer-grid {
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+}
+
+.factura-payment-card {
+  background: var(--bg-card);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.factura-payment-name {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.factura-finance-card {
+  min-width: 280px;
+}
+
+.factura-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.factura-summary-value {
+  font-weight: 500;
+}
+
+.factura-total-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--brand-red-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.factura-total-label {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.factura-total-value {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--brand-red);
+}
+
+.factura-bonus-box {
+  margin-top: 16px;
+  background: var(--color-success-bg);
+  border-left: 4px solid var(--color-success);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.factura-bonus-text {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.factura-extra-card {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.factura-extra-grid {
+  grid-template-columns: repeat(3, 1fr);
+  font-size: 0.9rem;
+}
+
+.factura-extra-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.factura-extra-value {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .factura-header-grid,
+  .factura-entity-grid,
+  .factura-footer-grid,
+  .factura-extra-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .factura-meta-right {
+    text-align: left;
+  }
+}
+
+@media print {
+  .se-page-header {
+    display: none !important;
+  }
+
+  .factura-container {
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* ============================================================
    CARDS
    ============================================================ */
 .se-card {
