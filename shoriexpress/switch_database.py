@@ -12,15 +12,8 @@ from pathlib import Path
 
 
 def _safe_env_file() -> Path:
-    """Devuelve una ruta .env absoluta y estática basada en este script."""
-    base_dir = Path(__file__).resolve().parent
-    env_file = (base_dir / '.env').resolve(strict=False)
-
-    # Garantiza que la ruta resultante siempre permanezca dentro del directorio
-    # fijo de este script, sin depender de entradas externas ni rutas relativas.
-    env_file.relative_to(base_dir)
-
-    return env_file
+    """Devuelve una ruta .env absolutamente estática y segura."""
+    return (Path(__file__).resolve().parent / '.env').resolve(strict=False)
 
 
 def switch_to_sqlite():
