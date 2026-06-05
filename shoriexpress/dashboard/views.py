@@ -520,6 +520,15 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
     try:
         import pymysql
         from django.db import connection
+
+        SHOW_CREATE_TABLE_SQL = "SHOW CREATE TABLE {0}"
+        SELECT_FROM_TABLE_SQL = "SELECT * FROM {0}"
+
+        def _safe_table_identifier(table_name):
+            cleaned = ''.join(ch for ch in table_name if ch.isalnum() or ch == '_')
+            if not cleaned or cleaned != table_name:
+                return None
+            return connection.ops.quote_name(cleaned)
         
         db_name = database.get('NAME')
         db_user = database.get('USER')
@@ -557,22 +566,22 @@ def _try_python_mysql_backup(request, database, backups_dir, backup_nombre):
             tables = [table[0] for table in cursor.fetchall()]
             
             for table in tables:
-                safe_table = ''.join(ch for ch in table if ch.isalnum() or ch == '_')
-                if not safe_table or safe_table != table:
+                safe_identifier = _safe_table_identifier(table)
+                if not safe_identifier:
                     continue
 
-                safe_identifier = connection.ops.quote_name(safe_table)
+                safe_table = safe_identifier.strip('`')
 
                 f.write(f"-- Estructura de tabla: {safe_table}\n")
                 f.write("DROP TABLE IF EXISTS {0};\n".format(safe_identifier))
 
                 # Obtener estructura CREATE TABLE
-                cursor.execute("SHOW CREATE TABLE {0}".format(safe_identifier))
+                cursor.execute(SHOW_CREATE_TABLE_SQL.format(safe_identifier))
                 create_table = cursor.fetchone()[1]
                 f.write(create_table + ";\n\n")
 
                 # Obtener datos
-                cursor.execute("SELECT * FROM {0}".format(safe_identifier))
+                cursor.execute(SELECT_FROM_TABLE_SQL.format(safe_identifier))
                 rows = cursor.fetchall()
                 columns = [desc[0] for desc in cursor.description]
                 
