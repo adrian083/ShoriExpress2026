@@ -10,23 +10,17 @@ import os
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-
 
 def _safe_env_file() -> Path:
-    """Devuelve una ruta .env validada y confinada al directorio del proyecto."""
-    candidate = (BASE_DIR / '.env').resolve()
-    safe_name = os.path.basename(str(candidate))
+    """Devuelve una ruta .env absoluta y estática basada en este script."""
+    base_dir = Path(__file__).resolve().parent
+    env_file = (base_dir / '.env').resolve(strict=False)
 
-    if safe_name != '.env':
-        raise ValueError('Ruta de entorno no válida.')
+    # Garantiza que la ruta resultante siempre permanezca dentro del directorio
+    # fijo de este script, sin depender de entradas externas ni rutas relativas.
+    env_file.relative_to(base_dir)
 
-    try:
-        candidate.relative_to(BASE_DIR.resolve())
-    except ValueError as exc:
-        raise ValueError('Ruta fuera del directorio permitido.') from exc
-
-    return candidate
+    return env_file
 
 
 def switch_to_sqlite():
