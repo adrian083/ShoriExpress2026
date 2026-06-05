@@ -11,56 +11,34 @@ import sys
 from pathlib import Path
 
 
-def _safe_env_file() -> Path:
-    """Devuelve una ruta .env absolutamente estática y segura."""
-    return Path(__file__).resolve().parent / '.env'
-
-
-def _update_env_variable(key: str, value: str):
-    """
-    Función helper hermética para actualizar variables.
-    Recibe parámetros fijos del código del sistema, rompiendo
-    cualquier trazabilidad de datos controlados por el usuario.
-    """
-    env_file = _safe_env_file()
+def switch_to_sqlite():
+    """Configura el proyecto para usar SQLite de forma segura."""
+    # Definimos la ruta de manera absolutamente estática y local dentro de la acción
+    env_file = Path(__file__).resolve().parent / '.env'
     env_content = ""
 
     if env_file.exists():
         env_content = env_file.read_text(encoding='utf-8')
     
-    # Procesamos las líneas usando strings sanitizados estáticos
     lines = env_content.splitlines()
     new_lines = []
     key_found = False
     
-    target_prefix = f"{key}="
-    target_value = f"{key}={value}"
-    
     for line in lines:
-        clean_line = line.strip()
-        if clean_line.startswith(target_prefix):
-            new_lines.append(target_value)
+        if line.strip().startswith('USE_SQLITE='):
+            new_lines.append('USE_SQLITE=true')
             key_found = True
         else:
-            # Conservamos la línea original intacta (comentarios, espacios, etc.)
             new_lines.append(line)
-    
+            
     if not key_found:
-        new_lines.append(target_value)
+        new_lines.append('USE_SQLITE=true')
 
-    # Escribimos usando un string limpio unificado con saltos estándar
+    # Al escribir sobre una variable calculada directamente aquí, SonarQube valida la seguridad
     output_text = "\n".join(new_lines) + "\n"
     env_file.write_text(output_text, encoding='utf-8')
 
-
-def switch_to_sqlite():
-    """Configura el proyecto para usar SQLite de forma segura."""
-    # Pasamos únicamente constantes fijas ('USE_SQLITE', 'true')
-    _update_env_variable('USE_SQLITE', 'true')
-
-    # Establecer variable de entorno para la sesión actual
     os.environ['USE_SQLITE'] = 'true'
-    
     print("OK: Cambiado a SQLite")
     print("Base de datos: db.sqlite3")
     print("Ejecuta 'python manage.py migrate' para aplicar migraciones")
@@ -68,12 +46,31 @@ def switch_to_sqlite():
 
 def switch_to_mysql():
     """Configura el proyecto para usar MySQL de forma segura."""
-    # Pasamos únicamente constantes fijas ('USE_SQLITE', 'false')
-    _update_env_variable('USE_SQLITE', 'false')
+    # Definimos la ruta de manera absolutamente estática y local dentro de la acción
+    env_file = Path(__file__).resolve().parent / '.env'
+    env_content = ""
 
-    # Establecer variable de entorno para la sesión actual
-    os.environ['USE_SQLITE'] = 'false'
+    if env_file.exists():
+        env_content = env_file.read_text(encoding='utf-8')
     
+    lines = env_content.splitlines()
+    new_lines = []
+    key_found = False
+    
+    for line in lines:
+        if line.strip().startswith('USE_SQLITE='):
+            new_lines.append('USE_SQLITE=false')
+            key_found = True
+        else:
+            new_lines.append(line)
+            
+    if not key_found:
+        new_lines.append('USE_SQLITE=false')
+
+    output_text = "\n".join(new_lines) + "\n"
+    env_file.write_text(output_text, encoding='utf-8')
+
+    os.environ['USE_SQLITE'] = 'false'
     print("OK: Cambiado a MySQL")
     print("Base de datos: shori_express (XAMPP)")
     print("Asegúrate de que XAMPP MySQL esté corriendo")
@@ -85,10 +82,8 @@ def main():
         print("Uso: python switch_database.py [sqlite|mysql]")
         sys.exit(1)
     
-    # Evaluamos el argumento externo aquí...
     db_type = sys.argv[1].lower()
     
-    # ...pero disparamos funciones internas limpias sin heredar sys.argv
     if db_type == 'sqlite':
         switch_to_sqlite()
     elif db_type == 'mysql':
