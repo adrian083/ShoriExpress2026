@@ -1,0 +1,19 @@
+# Despliegue en Render (plan gratuito)
+# https://dashboard.render.com/blueprints → New Blueprint Instance → conecta este repo
+services:
+  - type: web
+    name: shoriexpress
+    runtime: python
+    plan: free
+    rootDir: shoriexpress
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    startCommand: gunicorn shoriexpress.wsgi --bind 0.0.0.0:$PORT --log-file -
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: USE_SQLITE
+        value: "true"

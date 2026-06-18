@@ -1,52 +1,103 @@
-# Guía rápida de despliegue
+# Guía de despliegue — ShoriExpress (gratis en Render)
 
-Esta guía te muestra cómo dejar el proyecto listo para una demostración en un host gratuito.
+Tu proyecto ya está preparado para **Render** (plan gratuito). Es la opción más sencilla para una exposición: conectas GitHub y en unos minutos queda en línea.
 
-## 1) Prepara el repositorio
-1. Asegúrate de que tu proyecto esté subido a GitHub.
-2. Verifica que existan los archivos:
-   - `requirements.txt`
-   - `Procfile`
-   - `runtime.txt`
+> **Importante:** El código Django vive en la carpeta `shoriexpress/` dentro del repositorio. En Render debes indicar esa carpeta como **Root Directory**.
 
-## 2) Ajusta la configuración para producción
-En el panel de tu host, agrega estas variables de entorno:
+---
 
-- `DJANGO_SECRET_KEY=<una clave larga y aleatoria>`
-- `DJANGO_DEBUG=False`
-- `DJANGO_ALLOWED_HOSTS=<tu-dominio-o-render-app>`
-- `USE_SQLITE=true`
+## Opción A — Despliegue automático (recomendado)
 
-> Si el host te permite PostgreSQL o MySQL, puedes usar esa opción para una demo más seria.
+1. Entra a [render.com](https://render.com) y crea cuenta (puedes usar GitHub).
+2. Ve a **Blueprints** → **New Blueprint Instance**.
+3. Conecta el repositorio: `adrian083/ShoriExpress2026`.
+4. Render leerá el archivo `render.yaml` de la raíz y creará el servicio.
+5. Espera 5–10 minutos a que termine el **Build** y el **Deploy**.
+6. Abre la URL que te da Render (algo como `https://shoriexpress-xxxx.onrender.com`).
 
-## 3) Comandos que debe ejecutar el host
-El host normalmente ejecutará automáticamente:
+### Variables de entorno (ya vienen en `render.yaml`)
 
-- `pip install -r requirements.txt`
-- `python manage.py collectstatic --noinput`
-- `python manage.py migrate`
+| Variable | Valor |
+|----------|-------|
+| `DJANGO_SECRET_KEY` | Se genera sola |
+| `DJANGO_DEBUG` | `False` |
+| `USE_SQLITE` | `true` |
 
-Y el inicio del servidor se hará con:
+No necesitas configurar `DJANGO_ALLOWED_HOSTS`: Render lo detecta automáticamente.
 
-- `gunicorn shoriexpress.wsgi`
+---
 
-## 4) Crear superusuario
-Después del despliegue, ejecuta:
+## Opción B — Crear el servicio a mano
 
-- `python manage.py createsuperuser`
+Si prefieres no usar Blueprint:
 
-Esto te permitirá entrar al panel de administración.
+1. **New** → **Web Service** → conecta tu repo de GitHub.
+2. Configura así:
 
-## 5) Revisar que todo funcione
-Verifica que puedas entrar a:
-- la página principal,
-- el login,
-- el panel administrativo,
-- y la parte donde se ven productos.
+| Campo | Valor |
+|-------|-------|
+| **Root Directory** | `shoriexpress` |
+| **Runtime** | Python 3 |
+| **Build Command** | `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput` |
+| **Start Command** | `gunicorn shoriexpress.wsgi --bind 0.0.0.0:$PORT --log-file -` |
 
-## 6) Recomendación para sustentación
-Para una presentación rápida, usa:
-- `USE_SQLITE=true`,
-- `DJANGO_DEBUG=False`,
-- un dominio simple,
-- y datos de ejemplo cargados antes de la exposición.
+3. En **Environment**, agrega:
+
+```
+DJANGO_SECRET_KEY = (genera una clave larga aleatoria)
+DJANGO_DEBUG = False
+USE_SQLITE = true
+```
+
+4. Clic en **Create Web Service**.
+
+---
+
+## Iniciar sesión en la demo
+
+La primera vez que alguien intente entrar al login, si la base está vacía, el sistema crea automáticamente un usuario administrador:
+
+| Campo | Valor |
+|-------|-------|
+| Usuario | `admin` |
+| Contraseña | `Shori2024!` |
+
+---
+
+## Qué revisar antes de la exposición
+
+- [ ] La página principal carga con estilos (CSS).
+- [ ] Puedes iniciar sesión con `admin` / `Shori2024!`.
+- [ ] El menú de productos se ve correctamente.
+- [ ] El panel interno (`/panel/` o `/dashboard/`) funciona.
+
+---
+
+## Limitaciones del plan gratuito de Render
+
+- La app **se duerme** tras ~15 min sin visitas. La primera carga puede tardar **30–60 segundos** (normal en el plan free).
+- Los datos en SQLite **pueden perderse** si Render vuelve a desplegar. Para la exposición, entra una vez antes y verifica el login.
+- Las imágenes que subas en producción **no persisten** entre redespliegues (solo afecta si subes archivos nuevos en la nube).
+
+---
+
+## Si algo falla
+
+1. En Render, abre tu servicio → pestaña **Logs**.
+2. Errores frecuentes:
+   - **Root Directory incorrecto** → debe ser `shoriexpress`, no la raíz del repo.
+   - **DJANGO_SECRET_KEY no definida** → agrégala en Environment.
+   - **DisallowedHost** → vuelve a desplegar con el código actual (ya incluye soporte para Render).
+   - **Sin estilos** → el build debe ejecutar `collectstatic` (ya está en los comandos de arriba).
+
+---
+
+## Otras opciones gratuitas (alternativas)
+
+| Servicio | Ventaja | Desventaja |
+|----------|---------|------------|
+| **Render** | Muy fácil con GitHub | Se duerme en plan free |
+| **PythonAnywhere** | Estable para Django | Configuración manual, dominio `*.pythonanywhere.com` |
+| **Railway** | Rápido | Créditos limitados al mes |
+
+Para tu exposición de mañana, **Render con esta guía** es la opción más rápida.
