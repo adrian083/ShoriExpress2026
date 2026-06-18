@@ -67,6 +67,11 @@ render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if render_host and render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_host)
 
+# PythonAnywhere: define DJANGO_ALLOWED_HOSTS=tuusuario.pythonanywhere.com en el WSGI.
+pa_domain = os.environ.get("PYTHONANYWHERE_DOMAIN", "").strip()
+if pa_domain and pa_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(pa_domain)
+
 # Application definition
 
 INSTALLED_APPS = [

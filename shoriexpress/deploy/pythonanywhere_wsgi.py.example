@@ -1,0 +1,31 @@
+# =============================================================================
+# Plantilla WSGI para PythonAnywhere
+# =============================================================================
+# 1. En PythonAnywhere → Web → tu app → "WSGI configuration file"
+# 2. Borra el contenido y pega esto (cambia USERNAME por tu usuario de PA)
+# 3. Guarda y pulsa el botón verde "Reload"
+# =============================================================================
+
+import os
+import sys
+
+# Ruta al proyecto Django (carpeta que contiene manage.py)
+path = '/home/USERNAME/ShoriExpress2026/shoriexpress'
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'shoriexpress.settings'
+
+# Variables de entorno de producción
+os.environ.setdefault(
+    'DJANGO_SECRET_KEY',
+    'CAMBIA-ESTO-POR-UNA-CLAVE-LARGA-Y-ALEATORIA-MINIMO-50-CARACTERES',
+)
+os.environ.setdefault('DJANGO_DEBUG', 'False')
+os.environ.setdefault('USE_SQLITE', 'true')
+os.environ.setdefault('PYTHONANYWHERE_DOMAIN', 'USERNAME.pythonanywhere.com')
+os.environ.setdefault('DJANGO_ALLOWED_HOSTS', 'USERNAME.pythonanywhere.com')
+
+from django.core.wsgi import get_wsgi_application
+
+application = get_wsgi_application()
