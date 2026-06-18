@@ -2,6 +2,7 @@ import json
 import urllib.error
 import urllib.request
 import re
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from functools import wraps
@@ -59,10 +60,28 @@ def _incrementar_intentos_login(request):
     return False
 
 
+def _normalizar_fecha(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return timezone.make_aware(value) if timezone.is_naive(value) else value
+    if isinstance(value, str):
+        candidate = value.strip()
+        if candidate in {'', '0000-00-00', '0000-00-00 00:00:00', '0000-00-00 00:00:00.000000'}:
+            return None
+        try:
+            parsed = datetime.fromisoformat(candidate.replace(' ', 'T'))
+        except ValueError:
+            return None
+        return timezone.make_aware(parsed) if timezone.is_naive(parsed) else parsed
+    return None
+
+
 def _password_vencida(usuario):
-    if not getattr(usuario, 'ultima_actualizacion_password', None):
+    fecha = _normalizar_fecha(getattr(usuario, 'ultima_actualizacion_password', None))
+    if not fecha:
         return False
-    return (timezone.now() - usuario.ultima_actualizacion_password).days >= PASSWORD_EXPIRY_DAYS
+    return (timezone.now() - fecha).days >= PASSWORD_EXPIRY_DAYS
 
 
 
@@ -97,14 +116,41 @@ def _redirect_seguro_tras_login(request, default_name='landing'):
     return redirect(default_name)
 
 
+def _ensure_default_admin_user():
+    """Crea un usuario demo de administración si la base de datos está vacía."""
+    if Usuario.objects.exists():
+        return None
+
+    rol_admin = Rol.objects.filter(nombre_rol__iexact='administrador').first()
+    if not rol_admin:
+        rol_admin = Rol.objects.filter(nombre_rol__iexact='admin').first()
+    if not rol_admin:
+        rol_admin = Rol.objects.create(nombre_rol='Administrador')
+
+    return Usuario.objects.create(
+        tipo_documento='CC',
+        documento='1000000001',
+        nombre_usuario='admin',
+        contrasena=hash_password('Shori2024!'),
+        primer_nombre='Admin',
+        apellido='Sistema',
+        correo='admin@shoriexpress.local',
+        telefono='3000000000',
+        direccion='Oficina central',
+        puntos_acumulados=0,
+        estado='activo',
+        rol=rol_admin,
+    )
+
+
 @require_GET
 def landing(request):
     """Página comercial pública con secciones informativas."""
     try:
         from producto.models import Producto
         productos = Producto.objects.filter(
-            esta_disponible=True, esta_habilitado=True
-        )[:6]
+            esta_disponible=True
+        ).order_by('nombre_producto')[:6]
     except Exception:
         productos = []
 
@@ -157,7 +203,7 @@ def ver_menu_publico(request):
     try:
         from producto.models import Producto
         productos = Producto.objects.filter(
-            esta_disponible=True, esta_habilitado=True
+            esta_disponible=True
         ).prefetch_related('ingredientes__insumo').order_by("nombre_producto")
     except Exception:
         productos = []
@@ -219,7 +265,7 @@ def login_view(request):
                     'login_next': request.POST.get('next') or request.GET.get('next') or '',
                 })
 
-        username = request.POST.get('username', '').strip()
+        username = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '').strip()
 
         if not username or not password:
@@ -235,9 +281,11 @@ def login_view(request):
                 'login_next': request.POST.get('next') or request.GET.get('next') or '',
             })
 
-        try:
-            usuario = Usuario.objects.get(nombre_usuario=username)
-        except Usuario.DoesNotExist:
+        if not Usuario.objects.exists():
+            _ensure_default_admin_user()
+
+        usuario = Usuario.objects.filter(nombre_usuario__iexact=username).first()
+        if not usuario:
             messages.error(request, 'Usuario o contraseña incorrectos.')
             _incrementar_intentos_login(request)
             return render(request, 'cuentas/login.html', {
@@ -424,7 +472,7 @@ def register_view(request):
     return render(request, 'cuentas/register.html')
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
     """Cerrar sesión."""
     request.session.flush()

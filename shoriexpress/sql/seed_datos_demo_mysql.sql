@@ -19,6 +19,23 @@ SET NAMES utf8mb4;
 
 USE shori_express;
 
+-- Compatibilidad con bases heredadas: si la columna no existe, la agregamos antes de insertar.
+SET @descripcion_col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.columns
+  WHERE table_schema = DATABASE()
+    AND table_name = 'producto_producto'
+    AND column_name = 'descripcion_producto'
+);
+SET @descripcion_stmt := IF(
+  @descripcion_col_exists = 0,
+  'ALTER TABLE producto_producto ADD COLUMN descripcion_producto TEXT NULL',
+  'SELECT 1'
+);
+PREPARE descripcion_stmt FROM @descripcion_stmt;
+EXECUTE descripcion_stmt;
+DEALLOCATE PREPARE descripcion_stmt;
+
 -- Roles
 INSERT INTO rol_rol (nombre_rol)
 SELECT 'Administrador' WHERE NOT EXISTS (SELECT 1 FROM rol_rol WHERE nombre_rol = 'Administrador');

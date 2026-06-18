@@ -28,7 +28,7 @@ class Usuario(models.Model):
     apellido = models.CharField(max_length=40)
     correo = models.EmailField(max_length=100, unique=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
-    direccion = models.CharField(max_length=100)
+    direccion = models.CharField(max_length=100, blank=True)
     
     # Credenciales y Perfil
     nombre_usuario = models.CharField(max_length=50, unique=True)
@@ -65,22 +65,22 @@ class Usuario(models.Model):
         from django.core.exceptions import ValidationError
         import re
         USERNAME_RE = re.compile(r'^[A-Za-z0-9_.]{4,50}$')
-        DOCUMENTO_RE = re.compile(r'^[A-Za-z0-9]{5,20}$')
+        DOCUMENTO_RE = re.compile(r'^\d{5,20}$')
         NOMBRE_RE = re.compile(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,40}$')
-        TELEFONO_RE = re.compile(r'^[0-9]{10}$')
+        TELEFONO_RE = re.compile(r'^\d{10}$')
 
         if not USERNAME_RE.fullmatch(self.nombre_usuario):
             raise ValidationError('El usuario debe tener 4 a 50 caracteres y solo usar letras, números, punto o guion bajo.')
         if not DOCUMENTO_RE.fullmatch(self.documento):
-            raise ValidationError('El documento debe tener entre 5 y 20 caracteres alfanuméricos, sin espacios.')
+            raise ValidationError('El documento debe tener entre 5 y 20 dígitos numéricos, sin espacios.')
         if not NOMBRE_RE.fullmatch(self.primer_nombre):
             raise ValidationError('El nombre solo puede contener letras y espacios (2 a 40 caracteres).')
         if not NOMBRE_RE.fullmatch(self.apellido):
             raise ValidationError('El apellido solo puede contener letras y espacios (2 a 40 caracteres).')
         if self.telefono and not TELEFONO_RE.fullmatch(self.telefono):
             raise ValidationError('El teléfono debe tener exactamente 10 dígitos numéricos.')
-        if len(self.direccion) < 5 or len(self.direccion) > 100:
-            raise ValidationError('La dirección debe tener entre 5 y 100 caracteres.')
+        if self.direccion and (len(self.direccion) < 5 or len(self.direccion) > 100):
+            raise ValidationError('La dirección debe tener entre 5 y 100 caracteres si se proporciona.')
 
     class Meta:
         verbose_name = "Usuario"

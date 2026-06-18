@@ -19,10 +19,10 @@
                            placeholder="Ej: Administrador, Cajero, Cocinero..." 
                            required
                            minlength="3"
-                           maxlength="50"
+                           maxlength="30"
                            pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"
-                           title="Solo letras. Ejemplo: Administrador">
-                    <span class="se-form-hint">Usa nombres claros y sin símbolos.</span>
+                           title="Solo letras y espacios. Máximo 30 caracteres. Ejemplo: Administrador">
+                    <span class="se-form-hint">Usa nombres claros y sin símbolos. Máximo 30 caracteres.</span>
                 </div>
             </div>
 
@@ -45,6 +45,9 @@
 
         if (input.value.length < 3) {
             alert("El nombre del rol debe tener al menos 3 letras.");
+            e.preventDefault();
+        } else if (input.value.length > 30) {
+            alert("El nombre del rol no puede superar 30 caracteres.");
             e.preventDefault();
         }
     });

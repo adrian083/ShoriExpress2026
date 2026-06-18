@@ -21,8 +21,8 @@
                 </div>
                 <div class="se-col-4 se-form-group">
                     <label class="se-form-label" for="documento">Número Documento *</label>
-                    <input type="text" id="documento" name="documento" class="se-form-control" 
-                           value="{{ usuario.documento|default:'' }}" required pattern="[0-9]+" title="Solo números">
+                    <input type="text" id="documento" name="documento" class="se-form-control"
+                           value="{{ usuario.documento|default:'' }}" required pattern="[0-9]{5,20}" title="Solo números, entre 5 y 20 dígitos" inputmode="numeric">
                 </div>
                 <div class="se-col-5 se-form-group">
                     <label class="se-form-label" for="correo">Correo Electrónico *</label>
@@ -58,8 +58,8 @@
 
                 <div class="se-col-4 se-form-group">
                     <label class="se-form-label" for="telefono">Teléfono</label>
-                    <input type="tel" id="telefono" name="telefono" class="se-form-control" 
-                           value="{{ usuario.telefono|default:'' }}" placeholder="300 123 4567">
+                    <input type="tel" id="telefono" name="telefono" class="se-form-control"
+                           value="{{ usuario.telefono|default:'' }}" placeholder="3001234567" pattern="[0-9]{10}" title="Debe contener 10 dígitos" inputmode="numeric">
                 </div>
                 <div class="se-col-8 se-form-group">
                     <label class="se-form-label" for="direccion">Dirección Residencial</label>

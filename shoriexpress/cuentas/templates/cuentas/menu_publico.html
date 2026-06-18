@@ -93,8 +93,10 @@
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                         <span style="font-weight: 700; color: var(--brand-color); font-size: 1.2rem;">${{ producto.precio_venta }}</span>
-                        {% if usuario_logueado %}
+                        {% if usuario_logueado and producto.esta_habilitado %}
                             <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm">+ Agregar</a>
+                        {% elif usuario_logueado %}
+                            <span class="se-btn se-btn-secondary se-btn-sm" style="opacity: 0.85; cursor: default;">Próximamente</span>
                         {% else %}
                             <a href="{% url 'login' %}?next={{ request.path }}" class="se-btn se-btn-outline se-btn-sm">Inicia sesión</a>
                         {% endif %}

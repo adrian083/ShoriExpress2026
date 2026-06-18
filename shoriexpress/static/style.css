@@ -504,6 +504,8 @@ a:hover {
 .factura-header {
   padding: 32px;
   border-bottom: 2px solid var(--brand-red);
+  background: var(--bg-topbar);
+  color: var(--text-on-dark);
 }
 
 .factura-header-grid,
@@ -525,7 +527,7 @@ a:hover {
 
 .factura-label,
 .factura-extra-label {
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.74);
   font-size: 0.85rem;
   margin: 0 0 4px;
 }
@@ -537,7 +539,7 @@ a:hover {
 .factura-number {
   font-size: 2.5rem;
   font-weight: 800;
-  color: var(--brand-red);
+  color: #FFFFFF;
   margin: 0;
 }
 
@@ -550,6 +552,7 @@ a:hover {
 
 .factura-meta-value {
   font-size: 1.1rem;
+  color: #FFFFFF;
 }
 
 .factura-entity-grid {
@@ -759,6 +762,53 @@ a:hover {
 /* ============================================================
    CARDS
    ============================================================ */
+.se-detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.se-detail-card .se-card-header {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--brand-red-subtle) 100%);
+  border-bottom: 2px solid var(--brand-red);
+}
+
+.se-detail-info-grid {
+  background: var(--bg-table-row-alt);
+  border: 1px solid var(--border-color);
+}
+
+.se-detail-section-title {
+  font-size: 1.1rem;
+  border-left: 3px solid var(--brand-red);
+  padding-left: 10px;
+  margin: 24px 0 12px;
+  color: var(--text-primary);
+}
+
+.se-detail-invoice-card {
+  margin-top: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.se-detail-invoice-card .se-card-body p,
+.se-detail-invoice-card .se-card-body strong,
+.se-detail-card .se-card-body p,
+.se-detail-card .se-card-body strong,
+.se-detail-card .se-card-body td,
+.se-detail-card .se-card-body th,
+.se-detail-card .se-card-body label,
+.se-detail-card .se-card-body span {
+  color: var(--text-primary);
+}
+
+.se-detail-card .se-card-body .text-muted {
+  color: var(--text-secondary);
+}
+
 .se-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -766,8 +816,12 @@ a:hover {
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
   overflow: hidden;
+  
 }
 
+.se-card-title{
+    color: #fff;
+}
 .se-card:hover {
   box-shadow: var(--shadow-md);
 }
@@ -783,7 +837,7 @@ a:hover {
 .se-card-header h3 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-on-dark);
   margin: 0;
 }
 
@@ -1134,6 +1188,31 @@ a:hover {
 [data-theme="dark"] .se-btn-warning:hover {
   background: #3A3A3A;
   color: #FFFFFF;
+}
+
+.rol-edit-btn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #92400E;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+[data-theme="dark"] .rol-edit-btn {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FCD34D;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.rol-edit-btn:hover {
+  background: rgba(245, 158, 11, 0.28);
+  color: #78350F;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+[data-theme="dark"] .rol-edit-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+  color: #FDE68A;
+  border-color: rgba(245, 158, 11, 0.55);
 }
 
 /* Small */
@@ -1603,8 +1682,8 @@ textarea.se-form-control {
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: var(--bg-topbar);
+  border: 1px solid var(--border-color-strong);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
   box-shadow: var(--shadow-sm);
@@ -1621,11 +1700,14 @@ textarea.se-form-control {
 .se-search-field .se-form-label {
   font-size: 0.72rem;
   margin: 0;
+  color: var(--text-on-dark);
 }
 
 .se-search-field .se-form-control {
   padding: 8px 12px;
   font-size: 0.85rem;
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
 .se-search-actions {
@@ -1637,7 +1719,7 @@ textarea.se-form-control {
 
 .se-search-count {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.8);
   margin-top: 8px;
   padding-left: 4px;
 }

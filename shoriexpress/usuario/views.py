@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
@@ -130,7 +131,7 @@ def crear_usuario(request):
             puntos = 0
         puntos = max(0, puntos)
         try:
-            Usuario.objects.create(
+            usuario = Usuario(
                 tipo_documento=request.POST['tipo_doc'],
                 documento=request.POST['documento'].strip(),
                 nombre_usuario=request.POST['username'].strip(),
@@ -139,12 +140,17 @@ def crear_usuario(request):
                 apellido=request.POST['apellido'].strip(),
                 correo=request.POST['correo'].strip().lower(),
                 telefono=(request.POST.get('telefono') or '').strip() or None,
-                direccion=request.POST['direccion'].strip(),
+                direccion=(request.POST.get('direccion') or '').strip(),
                 puntos_acumulados=puntos,
                 estado=request.POST['estado'],
                 rol=Rol.objects.get(pk=request.POST['id_rol']),
                 ultima_actualizacion_password=timezone.now(),
             )
+            usuario.full_clean()
+            usuario.save()
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+            return render(request, 'usuario/form_usuario.html', {'roles': roles})
         except IntegrityError:
             messages.error(
                 request,
@@ -184,7 +190,7 @@ def editar_usuario(request, id):
         usuario.apellido = request.POST['apellido'].strip()
         usuario.correo = request.POST['correo'].strip().lower()
         usuario.telefono = (request.POST.get('telefono') or '').strip() or None
-        usuario.direccion = request.POST['direccion'].strip()
+        usuario.direccion = (request.POST.get('direccion') or '').strip()
         try:
             usuario.puntos_acumulados = max(0, int(request.POST.get('puntos') or 0))
         except (TypeError, ValueError):
@@ -192,7 +198,14 @@ def editar_usuario(request, id):
         usuario.estado = request.POST['estado']
         usuario.rol = Rol.objects.get(pk=request.POST['id_rol'])
         try:
+            usuario.full_clean()
             usuario.save()
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+            return render(request, 'usuario/form_usuario.html', {
+                'usuario': usuario,
+                'roles': roles,
+            })
         except IntegrityError:
             messages.error(
                 request,

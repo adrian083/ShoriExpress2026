@@ -21,6 +21,7 @@
                 <th>Cliente</th>
                 <th class="text-center">Tipo</th>
                 <th>Dirección</th>
+                <th>Instrucciones</th>
                 <th class="text-center">Estado</th>
                 <th class="text-center">Demora</th>
                 <th class="text-center">Total</th>
@@ -41,6 +42,7 @@
                     {% endif %}
                 </td>
                 <td>{{ p.direccion_pedido|default:"-" }}</td>
+                <td>{{ p.instrucciones_pedido|default:"-" }}</td>
                 <td class="text-center">
                     <span class="se-badge
                         {% if p.estado_pedido == 'pendiente' %}se-badge-warning
@@ -104,7 +106,7 @@
             </tr>
             {% empty %}
             <tr class="empty-row">
-                <td colspan="9">No se encontraron pedidos registrados.</td>
+                <td colspan="10">No se encontraron pedidos registrados.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -118,8 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
         containerId: 'searchPedidos',
         tableId: 'tablaPedidos',
         filters: [
-            { type: 'text', label: '🔍 Buscar', placeholder: 'Cliente, dirección, ID...', columns: [0, 1, 3] },
-            { type: 'select', label: 'Estado', column: 4, options: [
+            { type: 'text', label: '🔍 Buscar', placeholder: 'Cliente, dirección, instrucciones, ID...', columns: [0, 1, 3, 4] },
+            { type: 'select', label: 'Estado', column: 5, options: [
                 { value: 'pendiente', label: 'Pendiente' },
                 { value: 'preparacion', label: 'En preparación' },
                 { value: 'listo', label: 'Listo' },
@@ -131,8 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 { value: 'local', label: 'Local' },
                 { value: 'llevar', label: 'Para llevar' },
             ]},
-            { type: 'number_range', label: 'Total ($)', column: 6 },
-            { type: 'date_range', label: 'Fecha', column: 7 },
+            { type: 'number_range', label: 'Total ($)', column: 7 },
+            { type: 'date_range', label: 'Fecha', column: 8 },
         ]
     });
 });

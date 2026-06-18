@@ -6,8 +6,8 @@ class Rol(models.Model):
     Ejemplos: 'Administrador', 'Cajero', 'Cliente', 'Cocinero'.
     """
     nombre_rol = models.CharField(
-        max_length=50, 
-        unique=True, 
+        max_length=30,
+        unique=True,
         verbose_name="Nombre del Rol"
     )
 

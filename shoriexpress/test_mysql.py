@@ -1,5 +1,15 @@
 import os
-import MySQLdb
+
+try:
+    import MySQLdb as mysql_driver
+except ModuleNotFoundError:
+    try:
+        import pymysql
+        pymysql.install_as_MySQLdb()
+        import MySQLdb as mysql_driver
+    except ModuleNotFoundError as exc:
+        raise SystemExit(f"No se encontró un driver de MySQL: {exc}") from exc
+
 
 # Configuración de la base de datos
 def _load_env_file(path):
@@ -25,10 +35,10 @@ db_config = {
 }
 
 try:
-    conn = MySQLdb.connect(**db_config)
+    conn = mysql_driver.connect(**db_config)
     print("✅ Conexión exitosa a MySQL")
     conn.close()
-except MySQLdb.OperationalError as e:
+except mysql_driver.OperationalError as e:
     print(f"❌ Error de conexión: {e}")
     print("Posibles causas:")
     print("- MySQL no está corriendo en XAMPP")

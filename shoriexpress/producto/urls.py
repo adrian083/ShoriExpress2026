@@ -17,4 +17,5 @@ urlpatterns = [
     path('editar/<int:id>/', views.editar_producto, name='editar_producto'),
     path('eliminar/<int:id>/', views.eliminar_producto, name='eliminar_producto'),
     path('toggle/<int:producto_id>/', views.toggle_disponible, name='toggle_disponible'),
+    path('toggle-habilitado/<int:producto_id>/', views.toggle_habilitado, name='toggle_habilitado'),
 ]

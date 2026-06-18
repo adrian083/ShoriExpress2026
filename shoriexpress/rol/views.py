@@ -8,7 +8,7 @@ from cuentas.views import admin_shori_required
 
 from .models import Rol
 
-_MAX_NOMBRE_ROL = 50
+_MAX_NOMBRE_ROL = 30
 
 
 @admin_shori_required

@@ -38,6 +38,10 @@ class Recibo(models.Model):
         verbose_name_plural = "Recibos / Facturas"
         db_table = "recibo_recibo"
 
+    @property
+    def numero_recibo(self):
+        return self.id
+
     def __str__(self):
         # Django resolverá estas relaciones en tiempo de ejecución sin problemas
         return f"Recibo #{self.id} - Pedido #{self.pedido.id}"

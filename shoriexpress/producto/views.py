@@ -47,7 +47,7 @@ def api_configuracion_horario(request):
         }, status=400)
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
 def agregar_item(request, producto_id):
     """
     Agrega un producto al carrito con validación de horario
@@ -135,6 +135,19 @@ def toggle_disponible(request, producto_id):
     producto.esta_disponible = not producto.esta_disponible
     producto.save(update_fields=['esta_disponible'])
     messages.success(request, f"Producto '{producto.nombre_producto}' {'habilitado' if producto.esta_disponible else 'inhabilitado'}.")
+    return redirect('lista_productos')
+
+
+@admin_shori_required
+@require_POST
+def toggle_habilitado(request, producto_id):
+    producto = get_object_or_404(Producto, pk=producto_id)
+    producto.esta_habilitado = not producto.esta_habilitado
+    producto.save(update_fields=['esta_habilitado'])
+    messages.success(
+        request,
+        f"Producto '{producto.nombre_producto}' {'ahora se muestra en la página' if producto.esta_habilitado else 'ya no se muestra en la página'}."
+    )
     return redirect('lista_productos')
 
 

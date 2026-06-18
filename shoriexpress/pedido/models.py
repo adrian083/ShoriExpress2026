@@ -32,6 +32,12 @@ class Pedido(models.Model):
     
     # Se deja como opcional para pedidos locales (mejora sugerida)
     direccion_pedido = models.CharField(max_length=255, null=True, blank=True)
+    instrucciones_pedido = models.TextField(
+        max_length=250,
+        null=True,
+        blank=True,
+        help_text="Instrucciones para la preparación del pedido, por ejemplo 'sin cebolla'",
+    )
     
     # Requerimiento Profe: Estado por defecto "pendiente"
     estado_pedido = models.CharField(

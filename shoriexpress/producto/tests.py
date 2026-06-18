@@ -1,15 +1,36 @@
 from decimal import Decimal
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 
 from inventario.models import Inventario
+from producto import views as producto_views
 from producto.models import Producto
 from receta.models import Receta
+from rol.models import Rol
+from usuario.models import Usuario
 
 
 class ProductoAvailabilityTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.rol_admin = Rol.objects.create(nombre_rol='Administrador')
+        cls.admin_user = Usuario.objects.create(
+            tipo_documento='CC',
+            documento='1234567890',
+            primer_nombre='Admin',
+            apellido='Shori',
+            correo='admin@test.com',
+            telefono='1234567890',
+            direccion='Calle 1',
+            nombre_usuario='admin_test',
+            contrasena='1234',
+            rol=cls.rol_admin,
+            estado='activo',
+        )
         cls.producto = Producto.objects.create(
             nombre_producto='Perro Clásico',
             descripcion_producto='Producto de prueba',
@@ -58,4 +79,38 @@ class ProductoAvailabilityTest(TestCase):
         )
 
         self.assertFalse(self.producto.is_available_for_sale)
+
+    def test_toggle_habilitado_altera_el_estado_de_visibilidad(self):
+        factory = RequestFactory()
+        request = factory.post(
+            reverse('toggle_habilitado', kwargs={'producto_id': self.producto.pk})
+        )
+
+        session_middleware = SessionMiddleware(lambda r: None)
+        session_middleware.process_request(request)
+        request.session['usuario_id'] = str(self.admin_user.pk)
+        request.session['last_activity'] = 0
+        request.session.save()
+
+        message_middleware = MessageMiddleware(lambda r: None)
+        message_middleware.process_request(request)
+
+        response = producto_views.toggle_habilitado(
+            request,
+            producto_id=self.producto.pk,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('lista_productos'))
+        self.producto.refresh_from_db()
+        self.assertFalse(self.producto.esta_habilitado)
+
+    def test_agregar_producto_via_get_agrega_al_carrito(self):
+        with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
+            response = self.client.get(
+                reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk})
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('landing'))
 

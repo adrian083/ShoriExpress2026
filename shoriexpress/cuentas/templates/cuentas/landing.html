@@ -144,9 +144,15 @@
                             <span style="font-weight: 700; color: var(--brand-color); font-size: 1.1rem;">
                                 ${{ producto.precio_venta }}
                             </span>
-                            <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm" style="padding: 5px 12px; font-size: 0.8rem;">
-                                + Agregar
-                            </a>
+                            {% if producto.esta_habilitado %}
+                                <a href="{% url 'agregar_al_carrito' producto.pk %}" class="se-btn se-btn-primary se-btn-sm" style="padding: 5px 12px; font-size: 0.8rem;">
+                                    + Agregar
+                                </a>
+                            {% else %}
+                                <span class="se-btn se-btn-secondary se-btn-sm" style="padding: 5px 12px; font-size: 0.8rem; opacity: 0.85; cursor: default;">
+                                    Próximamente
+                                </span>
+                            {% endif %}
                         </div>
                     </div>
                 </article>

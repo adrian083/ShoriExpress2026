@@ -376,6 +376,7 @@
                 {% if usuario_logueado %}
                 <div class="user-info">
                     <p style="font-size: 0.95rem; margin-bottom: 5px;">📍 {{ usuario_logueado.direccion|default:"Dirección no especificada" }}</p>
+                    <p style="font-size: 0.95rem; margin-bottom: 5px;">📞 {{ usuario_logueado.telefono|default:"Teléfono no especificado" }}</p>
                     <p style="font-size: 0.8rem; color: var(--text-secondary);">Para: {{ usuario_logueado.primer_nombre }} {{ usuario_logueado.apellido }}</p>
                 </div>
                 {% else %}
@@ -423,6 +424,12 @@
                     <input type="hidden" id="total-sin-descuento" value="{{ cart_total_amount }}">
                     <input type="hidden" id="total-con-descuento" value="{{ total_con_descuento_bonos }}">
                     {% endif %}
+
+                    <div class="se-form-group" style="margin-bottom: 14px; text-align: left;">
+                        <label class="se-form-label" for="instrucciones_pedido">Instrucciones para tu pedido</label>
+                        <textarea id="instrucciones_pedido" name="instrucciones_pedido" class="se-form-control" rows="3" maxlength="250" placeholder="Ej: Sin cebolla, con salsa aparte, sin picante..."></textarea>
+                        <div style="font-size:0.8rem; color: var(--text-secondary); margin-top: 4px;">Se verán en tu pedido y también en el panel.</div>
+                    </div>
 
                     <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
                         Por ahora solo aceptamos pago en <strong>efectivo</strong> al recibir el pedido (domicilio o mostrador).

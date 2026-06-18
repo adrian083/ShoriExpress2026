@@ -70,13 +70,17 @@
 
             <!-- Menú Desktop -->
             <div class="nav-menu-desktop">
-                {% if request.session.usuario_id %}
-                    <a href="{% url 'mi_cuenta' request.session.usuario_id %}" class="se-btn se-btn-outline se-btn-sm">
-                        ⚙️ Mi cuenta
-                    </a>
-                    <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline se-btn-sm">
-                        📋 Mis pedidos
-                    </a>
+                {% if usuario_logueado %}
+                    {% if es_admin %}
+                        <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm">📊 Dashboard</a>
+                    {% else %}
+                        <a href="{% url 'mi_cuenta' usuario_logueado.id %}" class="se-btn se-btn-outline se-btn-sm">
+                            ⚙️ Mi cuenta
+                        </a>
+                        <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline se-btn-sm">
+                            📋 Mis pedidos
+                        </a>
+                    {% endif %}
                     <a href="{% url 'logout' %}" class="se-btn se-btn-dark se-btn-sm">Salir</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="se-btn se-btn-dark se-btn-sm">Ingresar</a>
@@ -96,9 +100,13 @@
     <a href="{% url 'menu_publico' %}" class="landing-mobile-link">Menú</a>
     
     <div class="landing-mobile-actions">
-        {% if request.session.usuario_id %}
-            <a href="{% url 'mi_cuenta' request.session.usuario_id %}" class="se-btn se-btn-outline se-btn-sm" style="width:100%; margin-bottom: 8px;">⚙️ Mis datos</a>
-            <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%; margin-bottom: 10px;">📋 Mis pedidos</a>
+        {% if usuario_logueado %}
+            {% if es_admin %}
+                <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%; margin-bottom: 8px;">📊 Dashboard</a>
+            {% else %}
+                <a href="{% url 'mi_cuenta' usuario_logueado.id %}" class="se-btn se-btn-outline se-btn-sm" style="width:100%; margin-bottom: 8px;">⚙️ Mis datos</a>
+                <a href="{% url 'mis_pedidos' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%; margin-bottom: 10px;">📋 Mis pedidos</a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="se-btn se-btn-dark se-btn-sm" style="width:100%;">Cerrar Sesión</a>
         {% else %}
             <a href="{% url 'login' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%;">Iniciar Sesión</a>

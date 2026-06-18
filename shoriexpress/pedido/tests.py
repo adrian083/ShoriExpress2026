@@ -35,3 +35,15 @@ class PedidoModelTest(TestCase):
         self.assertEqual(self.pedido.estado_pedido, 'pendiente')
         self.assertEqual(self.pedido.tipo_pedido, 'domicilio')
         self.assertEqual(str(self.pedido), f'Pedido #{self.pedido.id} - Ana (pendiente)')
+
+    def test_pedido_guarda_instrucciones(self):
+        pedido = Pedido.objects.create(
+            usuario=self.usuario,
+            tipo_pedido='domicilio',
+            direccion_pedido='Calle 9',
+            estado_pedido='pendiente',
+            total_pedido=Decimal('25.50'),
+            instrucciones_pedido='Sin cebolla y con salsa aparte',
+        )
+
+        self.assertEqual(pedido.instrucciones_pedido, 'Sin cebolla y con salsa aparte')

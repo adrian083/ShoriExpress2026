@@ -40,3 +40,14 @@ class UsuarioModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             self.usuario.full_clean()
+
+    def test_full_clean_rejects_non_numeric_document(self):
+        self.usuario.documento = 'ABC123'
+
+        with self.assertRaises(ValidationError):
+            self.usuario.full_clean()
+
+    def test_full_clean_allows_blank_address(self):
+        self.usuario.direccion = ''
+
+        self.usuario.full_clean()

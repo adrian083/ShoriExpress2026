@@ -38,6 +38,11 @@
                            required minlength="5" maxlength="200">
                 </div>
 
+                <div class="se-col-12 se-form-group">
+                    <label class="se-form-label" for="instrucciones_pedido">Instrucciones para el pedido</label>
+                    <textarea id="instrucciones_pedido" name="instrucciones_pedido" class="se-form-control" rows="3" maxlength="250" placeholder="Ej: Sin cebolla, con salsa aparte, sin picante...">{{ pedido.instrucciones_pedido|default:'' }}</textarea>
+                </div>
+
                 <div class="se-col-6 se-form-group">
                     <label class="se-form-label" for="estado_pedido">Estado del Pedido *</label>
                     <select name="estado_pedido" id="estado_pedido" class="se-form-control">

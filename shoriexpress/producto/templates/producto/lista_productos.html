@@ -39,10 +39,16 @@
             <a href="/recetas/crear/?producto_id={{ p.id }}" class="se-btn se-btn-primary se-btn-sm" title="Asignar ingredientes" style="flex: 1; text-align: center;">📋 Receta</a>
             <a href="{% url 'editar_producto' p.id %}" class="se-btn se-btn-warning se-btn-sm" style="flex: 1; text-align: center;">Editar</a>
             <a href="{% url 'eliminar_producto' p.id %}" class="se-btn se-btn-danger se-btn-sm" style="flex: 1; text-align: center;">Borrar</a>
-            <form action="{% url 'toggle_disponible' p.id %}" method="post" style="flex: 1; min-width: 120px;">
+            <form action="{% url 'toggle_disponible' p.id %}" method="post" style="flex: 1; min-width: 140px;">
                 {% csrf_token %}
                 <button type="submit" class="se-btn {% if p.esta_disponible %}se-btn-success{% else %}se-btn-secondary{% endif %} se-btn-sm" style="width: 100%;">
-                    {% if p.esta_disponible %}Deshabilitar{% else %}Habilitar{% endif %}
+                    {% if p.esta_disponible %}Ocultar menú{% else %}Mostrar menú{% endif %}
+                </button>
+            </form>
+            <form action="{% url 'toggle_habilitado' p.id %}" method="post" style="flex: 1; min-width: 140px;">
+                {% csrf_token %}
+                <button type="submit" class="se-btn {% if p.esta_habilitado %}se-btn-warning{% else %}se-btn-outline{% endif %} se-btn-sm" style="width: 100%;">
+                    {% if p.esta_habilitado %}Ocultar página{% else %}Mostrar página{% endif %}
                 </button>
             </form>
         </div>

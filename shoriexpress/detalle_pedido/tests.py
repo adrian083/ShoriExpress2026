@@ -1,7 +1,8 @@
 from datetime import time
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 
 from dashboard.models import ConfiguracionSistema
 from detalle_pedido.models import DetallePedido
@@ -9,6 +10,7 @@ from pedido.models import Pedido
 from producto.models import Producto
 from rol.models import Rol
 from usuario.models import Usuario
+from .views import lista_detalles
 
 
 class DetallePedidoBusinessLogicTest(TestCase):
@@ -64,4 +66,14 @@ class DetallePedidoBusinessLogicTest(TestCase):
     def test_str_representation_contains_product_and_order(self):
         expected = f"2 x {self.producto.nombre_producto} (Pedido #{self.pedido.id})"
         self.assertEqual(str(self.detalle), expected)
+
+    def test_lista_detalles_no_falla_con_fechas_invalidas(self):
+        session = self.client.session
+        session['usuario_id'] = self.usuario.pk
+        session['usuario_rol'] = 'admin'
+        session.save()
+
+        response = self.client.get(reverse('lista_detalles'), follow=True)
+
+        self.assertEqual(response.status_code, 200)
 

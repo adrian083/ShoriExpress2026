@@ -44,3 +44,6 @@ class ReciboModelTest(TestCase):
     def test_recibo_str_contains_order(self):
         expected = f'Recibo #{self.recibo.id} - Pedido #{self.pedido.id}'
         self.assertEqual(str(self.recibo), expected)
+
+    def test_numero_recibo_uses_internal_id(self):
+        self.assertEqual(self.recibo.numero_recibo, self.recibo.id)

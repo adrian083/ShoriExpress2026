@@ -166,6 +166,7 @@ def finalizar_compra(request):
                 direccion_pedido=request.POST.get(
                     "direccion_pedido", usuario_instancia.direccion
                 ),
+                instrucciones_pedido=request.POST.get("instrucciones_pedido", "").strip(),
                 estado_pedido="pendiente",
                 total_pedido=total_decimal,
                 fecha_entrega_estimada=fecha_estimada,
@@ -330,6 +331,7 @@ def crear_pedido(request):
             usuario=usuario_instancia,
             tipo_pedido=request.POST['tipo_pedido'],
             direccion_pedido=request.POST.get('direccion_pedido', ''),
+            instrucciones_pedido=request.POST.get('instrucciones_pedido', '').strip(),
             estado_pedido=request.POST.get('estado_pedido', 'pendiente'),
             total_pedido=total
         )
@@ -354,6 +356,7 @@ def editar_pedido(request, pk):
         pedido.usuario = Usuario.objects.get(pk=usuario_id)
         pedido.tipo_pedido = request.POST['tipo_pedido']
         pedido.direccion_pedido = request.POST.get('direccion_pedido', '')
+        pedido.instrucciones_pedido = request.POST.get('instrucciones_pedido', '').strip()
         pedido.estado_pedido = request.POST['estado_pedido']
         pedido.total_pedido = request.POST['total_pedido']
         pedido.save()

@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib import messages
+from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
 from cuentas.views import super_admin_required
@@ -9,6 +12,23 @@ from producto.models import Producto
 from usuario.models import Usuario
 
 from .models import DetallePedido
+
+
+def _normalizar_fecha(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return timezone.make_aware(value) if timezone.is_naive(value) else value
+    if isinstance(value, str):
+        candidate = value.strip()
+        if candidate in {'', '0000-00-00', '0000-00-00 00:00:00', '0000-00-00 00:00:00.000000'}:
+            return None
+        try:
+            parsed = datetime.fromisoformat(candidate.replace(' ', 'T'))
+        except ValueError:
+            return None
+        return timezone.make_aware(parsed) if timezone.is_naive(parsed) else parsed
+    return None
 
 
 @super_admin_required
@@ -44,8 +64,15 @@ def lista_detalles(request):
     elif disponibilidad == 'no_disponible':
         detalles = detalles.filter(producto__esta_disponible=False)
     
-    # Ordenamiento por fecha más reciente
-    detalles = detalles.order_by('-pedido__fecha_pedido')
+    # Ordenamiento por fecha más reciente; si alguna fecha es inválida, se coloca al final.
+    detalles = sorted(
+        detalles,
+        key=lambda d: (
+            _normalizar_fecha(getattr(d.pedido, 'fecha_pedido', None)) or datetime(1, 1, 1, tzinfo=timezone.utc),
+            _normalizar_fecha(getattr(d, 'fecha_creacion', None)) or datetime(1, 1, 1, tzinfo=timezone.utc),
+        ),
+        reverse=True,
+    )
     
     # Contexto para la plantilla
     context = {
@@ -53,7 +80,7 @@ def lista_detalles(request):
         'estados_disponibles': Pedido.ESTADOS_PEDIDO,
         'filtro_estado': estado_pedido,
         'filtro_disponibilidad': disponibilidad,
-        'contador_detalles': detalles.count(),
+        'contador_detalles': len(detalles),
     }
     
     return render(request, 'detalle_pedido/lista_detalles_cards.html', context)

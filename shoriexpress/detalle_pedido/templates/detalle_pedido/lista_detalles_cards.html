@@ -87,7 +87,7 @@
          data-fecha-pedido="{{ d.pedido.fecha_pedido|date:'Y-m-d' }}">
         <!-- Card Header -->
         <div class="se-card-header">
-            <div class="se-card-title">
+            <div class="se-card-title" style="color: #fff;">
                 <h3>🧾 Factura #{{ d.pedido.id }}</h3>
                 <span class="se-badge se-badge-{{ d.pedido.get_estado_pedido_display|lower }}">
                     {{ d.pedido.get_estado_pedido_display }}
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 /* ===== ESTILOS DE FILTROS AVANZADOS ===== */
 .se-filter-panel {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #111111 0%, #222222 100%);
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 20px;
@@ -563,13 +563,14 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: center;
     padding: 20px;
     background: linear-gradient(135deg, #000000 0%, #333333 100%);
-    color: #000000;
+    color: #ffffff;
     border-bottom: 3px solid #ff0000;
 }
 
 .se-card-title h3 {
     margin: 0;
     font-size: 1.2em;
+    color: #ffffff;
 }
 
 .se-card-actions {
