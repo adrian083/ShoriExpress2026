@@ -80,23 +80,20 @@ def crear_recibo(request):
                 'metodos': metodos,
             })
 
-        bonos = 0
-        if total >= config.umbral_bonos:
-            bonos = 1
-
         recibo = Recibo.objects.create(
             pedido=Pedido.objects.get(pk=ped_id),
             metodo_pago=MetodoPago.objects.get(pk=met_id),
             subtotal=request.POST.get('subtotal', 0),
             iva_total=request.POST.get('iva_total', 0),
             total_pagado=total,
-            puntos_ganados=bonos,
+            puntos_ganados=0,
         )
+
+        from pedido.bonos import otorgar_bono_si_aplica
+        bonos = otorgar_bono_si_aplica(recibo.pedido)
 
         if bonos > 0:
             usuario = recibo.pedido.usuario
-            usuario.bonos_fidelidad += bonos
-            usuario.save(update_fields=["bonos_fidelidad"])
             messages.success(
                 request,
                 f"✓ Recibo #{recibo.id} creado exitosamente. "

@@ -78,3 +78,14 @@ def procesar_inventario_por_pedido(sender, instance, created, **kwargs):
                 else:
                     insumo_db.estado_insumo = "disponible"
                     insumo_db.save(update_fields=["estado_insumo"])
+
+
+@receiver(post_save, sender=Pedido)
+def otorgar_bonos_al_entregar(sender, instance, created, **kwargs):
+    """Acredita bonos de fidelidad cuando el pedido pasa a entregado."""
+    anterior = getattr(instance, "_estado_pedido_anterior", None)
+    if instance.estado_pedido != "entregado" or anterior == "entregado":
+        return
+
+    from .bonos import otorgar_bono_si_aplica
+    otorgar_bono_si_aplica(instance)

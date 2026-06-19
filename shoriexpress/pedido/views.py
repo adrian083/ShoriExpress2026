@@ -21,12 +21,13 @@ from usuario.models import Usuario
 from producto.cart import Cart
 from producto.horario_validator import HorarioComercialValidator
 from producto.models import Producto
+from dashboard.models import ConfiguracionSistema
 
 from .models import Pedido
 
 logger = logging.getLogger(__name__)
 
-UMBRAL_BONOS = Decimal("50000.00")
+UMBRAL_BONOS = Decimal("50000.00")  # valor por defecto; el umbral real viene de ConfiguracionSistema
 MINUTOS_ENTREGA_ESTIMADOS = 45
 MAX_BONOS = 10
 COSTO_REDENCION_BONOS = 5
@@ -197,14 +198,7 @@ def finalizar_compra(request):
             subtotal = (total_decimal / Decimal("1.19")).quantize(Decimal("0.01"))
             iva_total = (total_decimal - subtotal).quantize(Decimal("0.01"))
 
-            bonos_ganados = 0
-            if total_decimal >= UMBRAL_BONOS:
-                bonos_ganados = 1
-                if usuario_instancia.bonos_fidelidad < MAX_BONOS:
-                    usuario_instancia.bonos_fidelidad = min(
-                        usuario_instancia.bonos_fidelidad + 1, MAX_BONOS
-                    )
-            if redimio or bonos_ganados > 0:
+            if redimio:
                 usuario_instancia.save(update_fields=["bonos_fidelidad"])
 
             Recibo.objects.create(
@@ -213,29 +207,31 @@ def finalizar_compra(request):
                 subtotal=subtotal,
                 iva_total=iva_total,
                 total_pagado=total_decimal,
-                puntos_ganados=bonos_ganados,
+                puntos_ganados=0,
             )
 
             cart.clear()
 
         logger.info("Pedido creado exitosamente", extra={'pedido_id': pedido.id, 'usuario_id': usuario_id})
 
-        if bonos_ganados > 0:
+        config = ConfiguracionSistema.get_config()
+        califica_bono = total_decimal >= config.umbral_bonos
+
+        if redimio:
             messages.success(
                 request,
-                f"¡Pago registrado! Tu compra de ${total_decimal:,.0f} sumó 1 bono. "
-                f"Llevas {usuario_instancia.bonos_fidelidad} bonos. "
+                f"¡Pago registrado! Se aplicó 5% de descuento y se descontaron {COSTO_REDENCION_BONOS} bonos. "
+                f"Te quedan {usuario_instancia.bonos_fidelidad} bonos. "
+                f"Entrega estimada: {fecha_estimada.strftime('%d/%m/%Y %H:%M')}.",
+            )
+        elif califica_bono:
+            messages.success(
+                request,
+                f"¡Pago registrado! Tu compra de ${total_decimal:,.0f} califica para 1 bono "
+                f"cuando el pedido sea entregado. "
                 f"Entrega estimada: {fecha_estimada.strftime('%d/%m/%Y %H:%M')}.",
             )
         else:
-            if redimio:
-                messages.success(
-                    request,
-                    f"¡Pago registrado! Se aplicó 5% de descuento y se descontaron {COSTO_REDENCION_BONOS} bonos. "
-                    f"Te quedan {usuario_instancia.bonos_fidelidad} bonos. "
-                    f"Entrega estimada: {fecha_estimada.strftime('%d/%m/%Y %H:%M')}.",
-                )
-                return redirect("mis_pedidos")
             messages.success(
                 request,
                 "¡Pago registrado! Pedido y recibo generados. "
@@ -261,13 +257,28 @@ def cambiar_estado(request, pedido_id):
     if request.method == 'POST':
         nuevo_estado = request.POST.get('nuevo_estado')
         if nuevo_estado:
+            puntos_antes = 0
+            try:
+                puntos_antes = pedido.recibo.puntos_ganados
+            except Recibo.DoesNotExist:
+                pass
+
             if nuevo_estado == "entregado" and not pedido.fecha_entrega_real:
                 pedido.fecha_entrega_real = timezone.now()
             pedido.estado_pedido = nuevo_estado
             if nuevo_estado == "cancelado":
                 pedido.fecha_entrega_real = None
             pedido.save()
-            messages.success(request, f"Estado del pedido #{pedido.pk} actualizado a {nuevo_estado}.")
+
+            msg = f"Estado del pedido #{pedido.pk} actualizado a {nuevo_estado}."
+            if nuevo_estado == "entregado":
+                pedido.refresh_from_db()
+                try:
+                    if pedido.recibo.puntos_ganados > puntos_antes:
+                        msg += " Se acreditó 1 bono al cliente."
+                except Recibo.DoesNotExist:
+                    pass
+            messages.success(request, msg)
 
     return redirect('lista_pedidos')
 
