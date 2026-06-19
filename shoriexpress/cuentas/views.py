@@ -21,6 +21,7 @@ from usuario.models import Usuario
 from rol.models import Rol
 
 from .password_utils import hash_password, password_coincide, rehash_si_legado
+from .demo_credentials import get_demo_password
 
 # Roles que tienen acceso al panel de administración/dashboard
 ROLES_ADMIN = ['admin', 'administrador', 'empleado']
@@ -131,7 +132,7 @@ def _ensure_default_admin_user():
         tipo_documento='CC',
         documento='1000000001',
         nombre_usuario='admin',
-        contrasena=hash_password('Shori2024!'),
+        contrasena=hash_password(get_demo_password()),
         primer_nombre='Admin',
         apellido='Sistema',
         correo='admin@shoriexpress.local',

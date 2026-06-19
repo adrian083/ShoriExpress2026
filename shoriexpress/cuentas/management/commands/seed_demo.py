@@ -2,14 +2,13 @@
 Carga datos de demostración (roles, usuarios, inventario, productos, recetas).
 Idempotente: se puede ejecutar varias veces sin duplicar registros.
 
-Contraseña de todos los usuarios demo: Shori2024!
+Contraseña de todos los usuarios demo: configurable con SEED_DEMO_PASSWORD en .env
 """
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from cuentas.password_utils import hash_password
+from cuentas.demo_credentials import get_demo_password
 from inventario.models import Inventario, InventarioLote
 from metodo_pago.models import MetodoPago
 from producto.models import Producto
@@ -17,7 +16,7 @@ from receta.models import Receta
 from rol.models import Rol
 from usuario.models import Usuario
 
-DEMO_PASSWORD = 'Shori2024!'
+from cuentas.password_utils import hash_password
 
 ROLES = ['Administrador', 'Cliente', 'Empleado', 'Reparto']
 
@@ -193,8 +192,9 @@ class Command(BaseCommand):
     help = 'Carga datos de demostración para ShoriExpress (idempotente).'
 
     def handle(self, *args, **options):
+        demo_password = get_demo_password()
         roles = self._seed_roles()
-        usuarios = self._seed_usuarios(roles)
+        usuarios = self._seed_usuarios(roles, demo_password)
         pagos = self._seed_metodos_pago()
         insumos = self._seed_insumos()
         productos = self._seed_productos()
@@ -205,7 +205,7 @@ class Command(BaseCommand):
             f'Demo lista: {len(roles)} roles, {usuarios} usuarios, {pagos} métodos de pago, '
             f'{len(insumos)} insumos, {len(productos)} productos, {lotes} lotes, {recetas} recetas.'
         ))
-        self.stdout.write('Contraseña de todos los usuarios demo: Shori2024!')
+        self.stdout.write('Contraseña de todos los usuarios demo: ver SEED_DEMO_PASSWORD en .env')
         self.stdout.write('Admin: usuario admin | Cliente: mariag | Empleado: andrea_cocina')
 
     def _seed_roles(self):
@@ -217,10 +217,10 @@ class Command(BaseCommand):
                 self.stdout.write(f'  + Rol: {nombre}')
         return created
 
-    def _seed_usuarios(self, roles):
+    def _seed_usuarios(self, roles, demo_password):
         roles_map = {r.nombre_rol: r for r in roles}
         count = 0
-        pwd_hash = hash_password(DEMO_PASSWORD)
+        pwd_hash = hash_password(demo_password)
         for data in USUARIOS:
             rol = roles_map[data['rol']]
             _, was_created = Usuario.objects.get_or_create(

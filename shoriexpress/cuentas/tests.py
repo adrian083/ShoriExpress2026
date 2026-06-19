@@ -6,7 +6,10 @@ from rol.models import Rol
 from usuario.models import Usuario
 from .context_processors import user_context
 from .password_utils import hash_password
+from .demo_credentials import get_demo_password
 from .views import ver_carrito, _password_vencida, ver_menu_publico
+
+TEST_USER_PASSWORD = 'local-test-only-not-a-real-credential'
 
 
 class CarritoTemplateTest(TestCase):
@@ -22,7 +25,7 @@ class CarritoTemplateTest(TestCase):
             telefono='3001234567',
             direccion='Calle 10 # 20-30',
             nombre_usuario='anagarcia',
-            contrasena=hash_password('1234'),
+            contrasena=hash_password(TEST_USER_PASSWORD),
             rol=self.rol,
         )
 
@@ -52,7 +55,7 @@ class CarritoTemplateTest(TestCase):
     def test_login_acepta_nombres_de_usuario_con_distinta_mayuscula(self):
         response = self.client.post(
             reverse('login'),
-            {'username': 'AnAgarcia', 'password': '1234'},
+            {'username': 'AnAgarcia', 'password': TEST_USER_PASSWORD},
             follow=True,
         )
 
