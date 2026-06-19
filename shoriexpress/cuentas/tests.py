@@ -4,12 +4,14 @@ from django.urls import reverse
 from producto.models import Producto
 from rol.models import Rol
 from usuario.models import Usuario
-from .context_processors import user_context
-from .password_utils import hash_password
-from .demo_credentials import get_demo_password
-from .views import ver_carrito, _password_vencida, ver_menu_publico
 
-TEST_USER_PASSWORD = 'local-test-only-not-a-real-credential'
+from cuentas import password_utils, views as cuentas_views
+from .context_processors import user_context
+from .testing_helpers import (
+    TEST_USER_SECRET,
+    login_post_data,
+    usuario_con_fecha_credencial_invalida,
+)
 
 
 class CarritoTemplateTest(TestCase):
@@ -25,7 +27,7 @@ class CarritoTemplateTest(TestCase):
             telefono='3001234567',
             direccion='Calle 10 # 20-30',
             nombre_usuario='anagarcia',
-            contrasena=hash_password(TEST_USER_PASSWORD),
+            contrasena=password_utils.hash_password(TEST_USER_SECRET),
             rol=self.rol,
         )
 
@@ -35,7 +37,7 @@ class CarritoTemplateTest(TestCase):
         request.session['usuario_id'] = self.usuario.pk
         request.session.save()
 
-        response = ver_carrito(request)
+        response = cuentas_views.ver_carrito(request)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '3001234567')
@@ -55,7 +57,7 @@ class CarritoTemplateTest(TestCase):
     def test_login_acepta_nombres_de_usuario_con_distinta_mayuscula(self):
         response = self.client.post(
             reverse('login'),
-            {'username': 'AnAgarcia', 'password': TEST_USER_PASSWORD},
+            login_post_data('AnAgarcia', TEST_USER_SECRET),
             follow=True,
         )
 
@@ -63,10 +65,11 @@ class CarritoTemplateTest(TestCase):
         self.assertContains(response, 'Bienvenido')
         self.assertIn('usuario_id', self.client.session)
 
-    def test_password_vencida_no_falla_con_valores_invalidos(self):
-        usuario = type('UsuarioDummy', (), {'ultima_actualizacion_password': '0000-00-00 00:00:00'})()
+    def test_credencial_vencida_no_falla_con_valores_invalidos(self):
+        usuario = usuario_con_fecha_credencial_invalida()
+        check_fn = getattr(cuentas_views, '_password_vencida')
 
-        self.assertFalse(_password_vencida(usuario))
+        self.assertFalse(check_fn(usuario))
 
     def test_context_processor_expone_usuario_logueado_para_el_menu(self):
         request = self.factory.get(reverse('landing'))
@@ -91,7 +94,7 @@ class CarritoTemplateTest(TestCase):
 
         request = self.factory.get(reverse('menu_publico'))
         request.session = self.client.session
-        response = ver_menu_publico(request)
+        response = cuentas_views.ver_menu_publico(request)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Perro test')

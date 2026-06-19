@@ -51,6 +51,7 @@ DJANGO_DEBUG=False
 USE_SQLITE=true
 PYTHONANYWHERE_DOMAIN=TU_USUARIO.pythonanywhere.com
 DJANGO_ALLOWED_HOSTS=TU_USUARIO.pythonanywhere.com
+SEED_DEMO_PASSWORD=Shori2024!
 ```
 
 Guarda con `Ctrl+O`, Enter, `Ctrl+X`.
