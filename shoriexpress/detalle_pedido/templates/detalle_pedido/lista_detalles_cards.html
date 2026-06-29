@@ -301,16 +301,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{% if messages %}
-    {% for message in messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                showToast("{{ message|escapejs }}", "{{ message.tags|escapejs }}");
-            });
-        </script>
-    {% endfor %}
-{% endif %}
-
 <style>
 /* ===== ESTILOS DE FILTROS AVANZADOS ===== */
 .se-filter-panel {

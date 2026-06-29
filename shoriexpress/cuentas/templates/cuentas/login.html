@@ -29,14 +29,6 @@
                 <h2>Iniciar Sesión</h2>
                 <p class="auth-subtitle">Ingresa tus credenciales para acceder</p>
 
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
                 <form method="POST" action="{% url 'login' %}" class="auth-form" id="loginForm">
                     {% csrf_token %}
                     {% if login_next %}
@@ -123,6 +115,7 @@
         }
     })();
 </script>
+{% include "includes/app_notify.html" %}
 
 </body>
 </html>

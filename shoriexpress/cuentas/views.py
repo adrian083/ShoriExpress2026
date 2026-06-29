@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from metodo_pago.models import MetodoPago
@@ -34,6 +35,23 @@ SESSION_TIMEOUT_MINUTES = 30
 MAX_FAILED_LOGIN_ATTEMPTS = 5
 LOCKOUT_MINUTES = 5
 PASSWORD_EXPIRY_DAYS = 90
+
+
+def csrf_failure(request, reason=''):
+    """Muestra error de la app en lugar de la página 403 del host."""
+    messages.error(
+        request,
+        'No se pudo completar la acción (sesión o token inválido). '
+        'Recarga la página e intenta de nuevo.',
+    )
+    referer = request.META.get('HTTP_REFERER')
+    if referer and url_has_allowed_host_and_scheme(
+        url=referer,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(referer)
+    return redirect('landing')
 
 
 def _session_expired(request):
@@ -168,6 +186,7 @@ def landing(request):
 
 
 @require_GET
+@ensure_csrf_cookie
 def ver_carrito(request):
     """Vista para visualizar los productos agregados al carrito."""
     usuario_logueado = _get_usuario_sesion(request)

@@ -4,6 +4,7 @@ from django.db.models import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 
 from .models import Rol
@@ -73,15 +74,14 @@ def editar_rol(request, id):
 def eliminar_rol(request, id):
     rol = get_object_or_404(Rol, pk=id)
     if request.method == 'POST':
-        try:
-            rol.delete()
-            messages.success(request, "Rol eliminado.")
-        except ProtectedError:
-            messages.error(
-                request,
-                "No se puede eliminar el rol porque hay usuarios u otros registros que lo usan. "
-                "Reasigna esos usuarios a otro rol e intenta de nuevo.",
-            )
-            return redirect('lista_roles')
-        return redirect('lista_roles')
+        return eliminar_con_mensaje(
+            request,
+            rol,
+            mensaje_ok='Rol eliminado.',
+            url_redirect='lista_roles',
+            mensaje_error=(
+                'No se puede eliminar el rol porque hay usuarios u otros registros que lo usan. '
+                'Reasigna esos usuarios a otro rol e intenta de nuevo.'
+            ),
+        )
     return render(request, 'rol/eliminar_rol.html', {'rol': rol})

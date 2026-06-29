@@ -1,0 +1,11 @@
+{% load static %}
+{% if messages %}
+<script type="application/json" id="django-messages-data">
+[
+{% for message in messages %}
+  {"message": "{{ message|escapejs }}", "tags": "{{ message.tags|escapejs }}"}{% if not forloop.last %},{% endif %}
+{% endfor %}
+]
+</script>
+{% endif %}
+<script src="{% static 'JS/toast.js' %}"></script>

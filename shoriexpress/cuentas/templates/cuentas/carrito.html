@@ -332,26 +332,28 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="cart-items-body">
                     {% if cart_count %}
                         {% for key, value in request.session.cart.items %}
-                        <tr>
+                        <tr data-product-id="{{ key }}">
                             <td><span class="product-name">{{ value.nombre }}</span></td>
                             <td class="text-center">
                                 <div class="quantity-controls">
-                                    <form method="post" action="{% url 'restar_producto' value.producto_id %}" class="cart-qty-form">
+                                    <form method="post" action="{% url 'restar_producto' key %}" class="cart-qty-form">
                                         {% csrf_token %}
+                                        <input type="hidden" name="ajax" value="1">
                                         <button type="submit" class="se-btn se-btn-outline se-btn-sm" title="Quitar una unidad">−</button>
                                     </form>
                                     <span class="quantity-badge">{{ value.cantidad }}</span>
-                                    <a href="{% url 'agregar_al_carrito' value.producto_id %}?next={% url 'ver_carrito' %}" class="se-btn se-btn-outline se-btn-sm" title="Agregar una unidad">+</a>
+                                    <a href="{% url 'agregar_al_carrito' key %}?next={% url 'ver_carrito' %}" class="se-btn se-btn-outline se-btn-sm cart-add-link" title="Agregar una unidad">+</a>
                                 </div>
                             </td>
                             <td class="price-cell">${{ value.precio }}</td>
                             <td class="total-cell">${{ value.total }}</td>
                             <td class="text-center">
-                                <form method="post" action="{% url 'eliminar_del_carrito' value.producto_id %}" class="cart-qty-form">
+                                <form method="post" action="{% url 'eliminar_del_carrito' key %}" class="cart-qty-form">
                                     {% csrf_token %}
+                                    <input type="hidden" name="ajax" value="1">
                                     <button type="submit" class="se-btn se-btn-outline-red se-btn-sm" title="Eliminar del carrito">🗑️</button>
                                 </form>
                             </td>
@@ -468,8 +470,9 @@
                 </a>
                 {% endif %}
 
-                <form action="{% url 'limpiar_carrito' %}" method="post" style="margin-top: 12px;">
+                <form action="{% url 'limpiar_carrito' %}" method="post" id="form-vaciar-carrito" style="margin-top: 12px;">
                     {% csrf_token %}
+                    <input type="hidden" name="ajax" value="1">
                     <button type="submit" class="se-btn se-btn-outline-red se-btn-sm" style="width: 100%;">
                         🗑️ Vaciar Carrito
                     </button>
@@ -484,8 +487,8 @@
     </div>
 </div>
 
-{% include "includes/flash_messages.html" %}
-<script src="{% static 'JS/toast.js' %}"></script>
+{% include "includes/app_notify.html" %}
+<script src="{% static 'JS/cart-actions.js' %}"></script>
 <script>
     (function() {
         const saved = localStorage.getItem('shori-theme');

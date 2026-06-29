@@ -9,6 +9,7 @@ from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 from .models import Producto
 from .cart import Cart
+from .cart_helpers import cart_action_response, wants_json, cart_payload
 from .horario_validator import HorarioComercialValidator
 from receta.models import Receta
 
@@ -55,30 +56,37 @@ def agregar_item(request, producto_id):
     """
     # Validar horario comercial
     if not HorarioComercialValidator.es_dentro_horario():
-        messages.error(
-            request,
-            HorarioComercialValidator.obtener_mensaje_fuera_horario()
-        )
+        msg = HorarioComercialValidator.obtener_mensaje_fuera_horario()
+        if wants_json(request):
+            return cart_action_response(request, message=msg, message_type='error', redirect_name='ver_carrito')
+        messages.error(request, msg)
         return redirect('ver_carrito')
     
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
 
     if not producto.esta_habilitado or not producto.esta_disponible:
-        messages.error(request, f"❌ {producto.nombre_producto} no está disponible actualmente.")
+        msg = f"❌ {producto.nombre_producto} no está disponible actualmente."
+        if wants_json(request):
+            return cart_action_response(request, message=msg, message_type='error', redirect_name='landing')
+        messages.error(request, msg)
         return redirect('landing')
 
     actual = int(cart.cart.get(str(producto.pk), {}).get("cantidad", 0))
     max_disponible = _max_unidades_por_inventario(producto)
     if max_disponible is not None and (actual + 1) > max_disponible:
         if max_disponible <= 0:
-            messages.error(request, f"❌ Sin stock disponible para {producto.nombre_producto}.")
+            msg = f"❌ Sin stock disponible para {producto.nombre_producto}."
         else:
-            messages.warning(request, f"⚠️ No puedes agregar más de {max_disponible} unidad(es) de {producto.nombre_producto}.")
-        return redirect('ver_carrito')
+            msg = f"⚠️ No puedes agregar más de {max_disponible} unidad(es) de {producto.nombre_producto}."
+        return cart_action_response(request, message=msg, message_type='error')
 
     cart.add(producto=producto)
-    messages.success(request, f"✓ ¡{producto.nombre_producto} agregado al carrito!")
+    msg = f"✓ ¡{producto.nombre_producto} agregado al carrito!"
+    if wants_json(request):
+        return cart_action_response(request, message=msg, message_type='success')
+
+    messages.success(request, msg)
     next_url = request.POST.get("next") or request.GET.get("next")
     if next_url and url_has_allowed_host_and_scheme(
         url=next_url,
@@ -94,8 +102,11 @@ def eliminar_item(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
     cart.remove(producto)
-    messages.success(request, f"✓ {producto.nombre_producto} eliminado del carrito.")
-    return redirect('ver_carrito')
+    return cart_action_response(
+        request,
+        message=f"✓ {producto.nombre_producto} eliminado del carrito.",
+        message_type='success',
+    )
 
 
 @require_POST
@@ -103,19 +114,28 @@ def restar_producto(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
     if int(cart.cart.get(str(producto.pk), {}).get("cantidad", 0)) <= 0:
-        messages.warning(request, "No puedes restar una cantidad inexistente.")
-        return redirect('ver_carrito')
+        return cart_action_response(
+            request,
+            message="No puedes restar una cantidad inexistente.",
+            message_type='warning',
+        )
     cart.decrement(producto)
-    messages.info(request, f"Cantidad de {producto.nombre_producto} actualizada.")
-    return redirect('ver_carrito')
+    return cart_action_response(
+        request,
+        message=f"Cantidad de {producto.nombre_producto} actualizada.",
+        message_type='info',
+    )
 
 
 @require_POST
 def limpiar_carrito(request):
     cart = Cart(request)
     cart.clear()
-    messages.info(request, "Carrito vaciado.")
-    return redirect('ver_carrito')
+    return cart_action_response(
+        request,
+        message="Carrito vaciado.",
+        message_type='info',
+    )
 
 
 @require_GET

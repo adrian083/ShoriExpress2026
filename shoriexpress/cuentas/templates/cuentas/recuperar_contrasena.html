@@ -24,14 +24,6 @@
             <div class="auth-form-card">
                 <h2>Recuperar contraseña</h2>
 
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
                 <form method="POST" class="auth-form">
                     {% csrf_token %}
                     <div class="se-form-group">
@@ -61,5 +53,6 @@
         </div>
     </div>
 </div>
+{% include "includes/app_notify.html" %}
 </body>
 </html>

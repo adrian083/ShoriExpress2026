@@ -314,7 +314,8 @@
     </div>
 </footer>
 
-{% include "includes/flash_messages.html" %}
+{% include "includes/app_notify.html" %}
+<script src="{% static 'JS/cart-add-links.js' %}"></script>
 
 <script>
     // Cart animation helper (used from landing menu links)
@@ -386,7 +387,6 @@
         }
     })();
 </script>
-<script src="{% static 'JS/toast.js' %}"></script>
 
 </body>
 </html>

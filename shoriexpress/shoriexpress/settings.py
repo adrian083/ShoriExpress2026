@@ -72,6 +72,20 @@ pa_domain = os.environ.get("PYTHONANYWHERE_DOMAIN", "").strip()
 if pa_domain and pa_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(pa_domain)
 
+# POST en HTTPS (PythonAnywhere, Render) requiere orígenes explícitos desde Django 4+.
+_csrf_origins = []
+for host in ALLOWED_HOSTS:
+    if host and host != '*':
+        _csrf_origins.append(f'https://{host}')
+        if DEBUG:
+            _csrf_origins.append(f'http://{host}')
+for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(','):
+    origin = origin.strip()
+    if origin and origin not in _csrf_origins:
+        _csrf_origins.append(origin)
+CSRF_TRUSTED_ORIGINS = _csrf_origins
+CSRF_FAILURE_VIEW = 'cuentas.views.csrf_failure'
+
 # Application definition
 
 INSTALLED_APPS = [

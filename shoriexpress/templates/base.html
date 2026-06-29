@@ -163,8 +163,6 @@
 </header>
 
 <main class="se-main">
-    {% include "includes/flash_messages.html" %}
-
     {% block content %}
     {% endblock %}
 </main>
@@ -233,8 +231,6 @@
         });
     })();
 </script>
-
-<!-- Sistema de Toast Notifications -->
-<script src="{% static 'JS/toast.js' %}"></script>
+{% include "includes/app_notify.html" %}
 </body>
 </html>

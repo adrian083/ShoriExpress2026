@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from cuentas.password_utils import hash_password, password_coincide
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required, login_shori_required
 
 from .models import Usuario
@@ -233,15 +234,14 @@ def eliminar_usuario(request, id):
         if sid and int(sid) == int(id):
             messages.error(request, 'No puedes eliminar tu propia cuenta desde el panel.')
             return redirect('lista_usuarios')
-        try:
-            usuario.delete()
-            messages.success(request, 'Usuario eliminado.')
-        except ProtectedError:
-            messages.error(
-                request,
-                "No se puede eliminar el usuario porque tiene pedidos, recibos u otros registros asociados. "
-                "Reasigna o elimina esos registros primero.",
-            )
-            return redirect('lista_usuarios')
-        return redirect('lista_usuarios')
+        return eliminar_con_mensaje(
+            request,
+            usuario,
+            mensaje_ok='Usuario eliminado.',
+            url_redirect='lista_usuarios',
+            mensaje_error=(
+                'No se puede eliminar el usuario porque tiene pedidos, recibos u otros registros asociados. '
+                'Reasigna o elimina esos registros primero.'
+            ),
+        )
     return render(request, 'usuario/eliminar_usuario.html', {'usuario': usuario})

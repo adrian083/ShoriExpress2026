@@ -35,14 +35,6 @@
                 <h2>Crear Cuenta</h2>
                 <p class="auth-subtitle">Completa el formulario para registrarte</p>
 
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
                 <form method="POST" action="{% url 'register' %}" class="auth-form" id="registerForm">
                     {% csrf_token %}
 
@@ -184,6 +176,7 @@
         }
     })();
 </script>
+{% include "includes/app_notify.html" %}
 
 </body>
 </html>

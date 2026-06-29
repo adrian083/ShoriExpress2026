@@ -86,17 +86,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Toast Notifications (integración con Django messages) -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar toasts de mensajes de Django
-    const messages = document.querySelectorAll('[data-message]');
-    messages.forEach(msg => {
-        const type = msg.getAttribute('data-type');
-        const text = msg.getAttribute('data-message');
-        showToast(text, type);
-    });
-});
-</script>
-
 {% endblock %}

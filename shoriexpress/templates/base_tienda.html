@@ -115,7 +115,6 @@
 </div>
 
 <div style="max-width: 960px; margin: 0 auto; padding: 24px 20px 56px;">
-    {% include "includes/flash_messages.html" %}
     {% block content %}{% endblock %}
 </div>
 
@@ -140,7 +139,7 @@
         if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     })();
 </script>
-<script src="{% static 'JS/toast.js' %}"></script>
+{% include "includes/app_notify.html" %}
 {% block extra_js %}{% endblock %}
 </body>
 </html>

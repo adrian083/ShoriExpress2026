@@ -136,14 +136,45 @@ function removeAllToasts() {
  * Procesar mensajes de Django y mostrarlos como toasts
  * Integración automática con el sistema de mensajes de Django
  */
+function mapMessageTags(raw) {
+  const tags = (raw || '').split(/\s+/);
+  if (tags.includes('error')) return 'error';
+  if (tags.includes('success')) return 'success';
+  if (tags.includes('warning')) return 'warning';
+  return 'info';
+}
+
 function processDjangoMessages() {
+  const jsonEl = document.getElementById('django-messages-data');
+  if (jsonEl) {
+    try {
+      const parsed = JSON.parse(jsonEl.textContent);
+      parsed.forEach(function (msg) {
+        const type = mapMessageTags(msg.tags);
+        showToast(msg.message, type);
+        if (type === 'success' && msg.message.toLowerCase().includes('agregado')) {
+          const cartIcon = document.getElementById('cart-icon-nav');
+          if (cartIcon) {
+            cartIcon.classList.add('cart-animate');
+            setTimeout(function () {
+              cartIcon.classList.remove('cart-animate');
+            }, 600);
+          }
+        }
+      });
+    } catch (e) {
+      console.warn('Error parsing Django messages JSON:', e);
+    }
+    jsonEl.remove();
+  }
+
   const messagesList = document.querySelector('[data-django-messages]');
   if (messagesList) {
     const messages = messagesList.getAttribute('data-django-messages');
     if (messages) {
       try {
         const parsed = JSON.parse(messages);
-        parsed.forEach(msg => {
+        parsed.forEach(function (msg) {
           showToast(msg.message, msg.type);
         });
       } catch (e) {
@@ -155,17 +186,15 @@ function processDjangoMessages() {
   document.querySelectorAll('.django-flash-message').forEach(function (el) {
     const text = el.textContent.trim();
     if (!text) return;
-    const tags = (el.dataset.tags || '').split(/\s+/);
-    let type = 'info';
-    if (tags.includes('error')) type = 'error';
-    else if (tags.includes('success')) type = 'success';
-    else if (tags.includes('warning')) type = 'warning';
+    const type = mapMessageTags(el.dataset.tags);
     showToast(text, type);
     if (type === 'success' && text.toLowerCase().includes('agregado')) {
       const cartIcon = document.getElementById('cart-icon-nav');
       if (cartIcon) {
         cartIcon.classList.add('cart-animate');
-        setTimeout(() => cartIcon.classList.remove('cart-animate'), 600);
+        setTimeout(function () {
+          cartIcon.classList.remove('cart-animate');
+        }, 600);
       }
     }
   });
@@ -173,6 +202,24 @@ function processDjangoMessages() {
   const flashContainer = document.querySelector('.django-flash-messages');
   if (flashContainer) flashContainer.remove();
 }
+
+function initNotifications() {
+  if (initNotifications._done || typeof showToast !== 'function') return;
+  const hasMessages =
+    document.getElementById('django-messages-data') ||
+    document.querySelector('.django-flash-message') ||
+    document.querySelector('[data-django-messages]');
+  if (!hasMessages) return;
+  initNotifications._done = true;
+  processDjangoMessages();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNotifications);
+} else {
+  initNotifications();
+}
+window.addEventListener('pageshow', initNotifications);
 
 /**
  * Atajos útiles para mensajes comunes
@@ -184,17 +231,9 @@ const Toast = {
   info: (message, title = null) => showToast(message, 'info', 4000, title || 'Información'),
 };
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-  // Procesar mensajes de Django automáticamente
-  processDjangoMessages();
-
-  // Escuchar eventos de formulario
-  document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', () => {
-      // El servidor enviará mensajes que se procesarán en la próxima carga
-    });
-  });
+// Inicializar cuando el DOM esté listo (respaldo; initNotifications ya corre arriba)
+document.addEventListener('DOMContentLoaded', function () {
+  initNotifications();
 });
 
 // Exportar para uso global

@@ -4,6 +4,7 @@ from django.db.models.deletion import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 
 from .models import MetodoPago
@@ -68,14 +69,13 @@ def editar_metodo(request, id):
 def eliminar_metodo(request, id):
     metodo = get_object_or_404(MetodoPago, pk=id)
     if request.method == 'POST':
-        try:
-            metodo.delete()
-        except ProtectedError:
-            messages.warning(
-                request,
-                "No se puede eliminar este método de pago porque está siendo utilizado por uno o más recibos."
-            )
-            return redirect('lista_metodos')
-        messages.success(request, "Método eliminado.")
-        return redirect('lista_metodos')
+        return eliminar_con_mensaje(
+            request,
+            metodo,
+            mensaje_ok='Método eliminado.',
+            url_redirect='lista_metodos',
+            mensaje_error=(
+                'No se puede eliminar este método de pago porque está siendo utilizado por uno o más recibos.'
+            ),
+        )
     return render(request, 'metodo_pago/eliminar_metodo.html', {'metodo': metodo})
