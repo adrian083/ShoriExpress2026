@@ -8,6 +8,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 from movimiento_inventario.models import MovimientoInventario
 from usuario.models import Usuario
@@ -173,8 +174,15 @@ def editar_insumo(request, id):
 def eliminar_insumo(request, id):
     insumo = get_object_or_404(Inventario, pk=id)
     if request.method == "POST":
-        insumo.delete()
-        return redirect("lista_inventario")
+        return eliminar_con_mensaje(
+            request,
+            insumo,
+            mensaje_ok="Insumo eliminado.",
+            url_redirect="lista_inventario",
+            mensaje_error=(
+                "No se puede eliminar el insumo porque está en recetas, movimientos u otros registros."
+            ),
+        )
     return render(request, "inventario/eliminar_insumo.html", {"insumo": insumo})
 
 

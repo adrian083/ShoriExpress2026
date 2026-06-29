@@ -138,19 +138,40 @@ function removeAllToasts() {
  */
 function processDjangoMessages() {
   const messagesList = document.querySelector('[data-django-messages]');
-  if (!messagesList) return;
-
-  const messages = messagesList.getAttribute('data-django-messages');
-  if (!messages) return;
-
-  try {
-    const parsed = JSON.parse(messages);
-    parsed.forEach(msg => {
-      showToast(msg.message, msg.type);
-    });
-  } catch (e) {
-    console.warn('Error parsing Django messages:', e);
+  if (messagesList) {
+    const messages = messagesList.getAttribute('data-django-messages');
+    if (messages) {
+      try {
+        const parsed = JSON.parse(messages);
+        parsed.forEach(msg => {
+          showToast(msg.message, msg.type);
+        });
+      } catch (e) {
+        console.warn('Error parsing Django messages:', e);
+      }
+    }
   }
+
+  document.querySelectorAll('.django-flash-message').forEach(function (el) {
+    const text = el.textContent.trim();
+    if (!text) return;
+    const tags = (el.dataset.tags || '').split(/\s+/);
+    let type = 'info';
+    if (tags.includes('error')) type = 'error';
+    else if (tags.includes('success')) type = 'success';
+    else if (tags.includes('warning')) type = 'warning';
+    showToast(text, type);
+    if (type === 'success' && text.toLowerCase().includes('agregado')) {
+      const cartIcon = document.getElementById('cart-icon-nav');
+      if (cartIcon) {
+        cartIcon.classList.add('cart-animate');
+        setTimeout(() => cartIcon.classList.remove('cart-animate'), 600);
+      }
+    }
+  });
+
+  const flashContainer = document.querySelector('.django-flash-messages');
+  if (flashContainer) flashContainer.remove();
 }
 
 /**

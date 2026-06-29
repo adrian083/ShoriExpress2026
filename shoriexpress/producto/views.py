@@ -5,6 +5,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from decimal import Decimal
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 from .models import Producto
 from .cart import Cart
@@ -93,6 +94,7 @@ def eliminar_item(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
     cart.remove(producto)
+    messages.success(request, f"✓ {producto.nombre_producto} eliminado del carrito.")
     return redirect('ver_carrito')
 
 
@@ -104,6 +106,7 @@ def restar_producto(request, producto_id):
         messages.warning(request, "No puedes restar una cantidad inexistente.")
         return redirect('ver_carrito')
     cart.decrement(producto)
+    messages.info(request, f"Cantidad de {producto.nombre_producto} actualizada.")
     return redirect('ver_carrito')
 
 
@@ -215,7 +218,15 @@ def editar_producto(request, id):
 def eliminar_producto(request, id):
     producto = get_object_or_404(Producto, pk=id)
     if request.method == 'POST':
-        producto.delete()
-        messages.success(request, "Producto eliminado.")
-        return redirect('lista_productos')
+        nombre = producto.nombre_producto
+        response = eliminar_con_mensaje(
+            request,
+            producto,
+            mensaje_ok=f"Producto '{nombre}' eliminado.",
+            url_redirect='lista_productos',
+            mensaje_error=(
+                "No se puede eliminar el producto porque tiene pedidos, recetas u otros registros asociados."
+            ),
+        )
+        return response
     return render(request, 'producto/eliminar_producto.html', {'producto': producto})

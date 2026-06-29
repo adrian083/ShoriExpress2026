@@ -163,13 +163,7 @@
 </header>
 
 <main class="se-main">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="se-alert {% if message.tags == 'error' %}se-alert-error{% elif message.tags == 'success' %}se-alert-success{% else %}se-alert-info{% endif %}" style="margin-bottom: 16px;">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+    {% include "includes/flash_messages.html" %}
 
     {% block content %}
     {% endblock %}
@@ -242,26 +236,5 @@
 
 <!-- Sistema de Toast Notifications -->
 <script src="{% static 'JS/toast.js' %}"></script>
-<script>
-// Convertir mensajes de Django a toasts
-document.addEventListener('DOMContentLoaded', function() {
-    // Obtener todos los mensajes de Django
-    const alerts = document.querySelectorAll('.se-alert');
-    alerts.forEach(alert => {
-        const text = alert.textContent.trim();
-        let type = 'info';
-        
-        if (alert.classList.contains('se-alert-success')) {
-            type = 'success';
-        } else if (alert.classList.contains('se-alert-error')) {
-            type = 'error';
-        }
-        
-        if (text) {
-            showToast(text, type);
-        }
-    });
-});
-</script>
 </body>
 </html>

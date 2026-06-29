@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db.models import DecimalField, F, Sum
 from django.db.models import Value as V
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import super_admin_required
 from detalle_pedido.models import DetallePedido
 from metodo_pago.models import MetodoPago
@@ -167,9 +168,13 @@ def eliminar_recibo(request, id):
     recibo = get_object_or_404(Recibo, pk=id)
     if request.method == 'POST':
         recibo_id = recibo.id
-        recibo.delete()
-        messages.success(request, f"✓ Recibo #{recibo_id} eliminado correctamente.")
-        return redirect('lista_recibos')
+        return eliminar_con_mensaje(
+            request,
+            recibo,
+            mensaje_ok=f"✓ Recibo #{recibo_id} eliminado correctamente.",
+            url_redirect='lista_recibos',
+            mensaje_error="No se puede eliminar el recibo porque tiene registros relacionados.",
+        )
     return render(request, 'recibo/eliminar_recibo.html', {'recibo': recibo})
 
 

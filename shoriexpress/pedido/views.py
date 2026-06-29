@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required, login_shori_required
 from detalle_pedido.models import DetallePedido
 from metodo_pago.models import MetodoPago
@@ -385,9 +386,15 @@ def editar_pedido(request, pk):
 def eliminar_pedido(request, id):
     pedido = get_object_or_404(Pedido, pk=id)
     if request.method == 'POST':
-        pedido.delete()
-        messages.success(request, "Pedido eliminado.")
-        return redirect('lista_pedidos')
+        return eliminar_con_mensaje(
+            request,
+            pedido,
+            mensaje_ok="Pedido eliminado.",
+            url_redirect='lista_pedidos',
+            mensaje_error=(
+                "No se puede eliminar el pedido porque tiene recibos u otros registros asociados."
+            ),
+        )
     return render(request, 'pedido/eliminar_pedido.html', {'pedido': pedido})
 
 

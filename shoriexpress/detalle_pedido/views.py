@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import super_admin_required
 from pedido.models import Pedido
 from producto.models import Producto
@@ -227,7 +228,10 @@ def editar_detalle(request, id):
 def eliminar_detalle(request, id):
     detalle = get_object_or_404(DetallePedido, pk=id)
     if request.method == 'POST':
-        detalle.delete()
-        messages.success(request, "Línea de pedido eliminada.")
-        return redirect('lista_detalles')
+        return eliminar_con_mensaje(
+            request,
+            detalle,
+            mensaje_ok="Línea de pedido eliminada.",
+            url_redirect='lista_detalles',
+        )
     return render(request, 'detalle_pedido/eliminar_detalle.html', {'detalle': detalle})

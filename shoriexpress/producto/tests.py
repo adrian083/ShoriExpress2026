@@ -114,3 +114,28 @@ class ProductoAvailabilityTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('landing'))
 
+    def test_restar_y_eliminar_carrito_requieren_post(self):
+        with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
+            self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
+
+        get_restar = self.client.get(
+            reverse('restar_producto', kwargs={'producto_id': self.producto.pk})
+        )
+        self.assertEqual(get_restar.status_code, 405)
+
+        post_restar = self.client.post(
+            reverse('restar_producto', kwargs={'producto_id': self.producto.pk})
+        )
+        self.assertEqual(post_restar.status_code, 302)
+        self.assertEqual(post_restar.url, reverse('ver_carrito'))
+
+        post_eliminar = self.client.post(
+            reverse('eliminar_del_carrito', kwargs={'producto_id': self.producto.pk})
+        )
+        self.assertEqual(post_eliminar.status_code, 302)
+
+        post_limpiar = self.client.post(reverse('limpiar_carrito'))
+        self.assertEqual(post_limpiar.status_code, 302)
+        session = self.client.session
+        self.assertEqual(session.get('cart', {}), {})
+

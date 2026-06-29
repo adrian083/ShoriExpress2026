@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 
+from cuentas.delete_utils import eliminar_con_mensaje
 from cuentas.views import admin_shori_required
 from inventario.models import Inventario
 from producto.models import Producto
@@ -144,7 +145,10 @@ def editar_receta(request, id):
 def eliminar_receta(request, id):
     receta = get_object_or_404(Receta, pk=id)
     if request.method == 'POST':
-        receta.delete()
-        messages.success(request, "Ingrediente eliminado de la receta.")
-        return redirect('lista_recetas')
+        return eliminar_con_mensaje(
+            request,
+            receta,
+            mensaje_ok="Ingrediente eliminado de la receta.",
+            url_redirect='lista_recetas',
+        )
     return render(request, 'receta/eliminar_receta.html', {'receta': receta})
