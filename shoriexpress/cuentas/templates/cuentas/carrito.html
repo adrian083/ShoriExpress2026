@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Mi Carrito - Shori Express</title>
     <link rel="icon" type="image/x-icon" href="{% static 'IMG/SHORIp.ico' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
@@ -103,6 +104,30 @@
 
         .cart-qty-form button {
             cursor: pointer;
+        }
+
+        .cart-qty-input {
+            width: 52px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 4px 6px;
+            border: 2px solid var(--brand-red);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            -moz-appearance: textfield;
+        }
+
+        .cart-qty-input::-webkit-outer-spin-button,
+        .cart-qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .cart-qty-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25);
         }
         
         .quantity-badge {
@@ -339,23 +364,24 @@
                             <td><span class="product-name">{{ value.nombre }}</span></td>
                             <td class="text-center">
                                 <div class="quantity-controls">
-                                    <form method="post" action="{% url 'restar_producto' key %}" class="cart-qty-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="ajax" value="1">
-                                        <button type="submit" class="se-btn se-btn-outline se-btn-sm" title="Quitar una unidad">−</button>
-                                    </form>
-                                    <span class="quantity-badge">{{ value.cantidad }}</span>
-                                    <a href="{% url 'agregar_al_carrito' key %}?next={% url 'ver_carrito' %}" class="se-btn se-btn-outline se-btn-sm cart-add-link" title="Agregar una unidad">+</a>
+                                    <a href="{% url 'restar_producto' key %}?ajax=1" class="se-btn se-btn-outline se-btn-sm cart-restar-link" title="Quitar una unidad">−</a>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="999"
+                                        class="cart-qty-input"
+                                        value="{{ value.cantidad }}"
+                                        data-product-id="{{ key }}"
+                                        aria-label="Cantidad de {{ value.nombre }}"
+                                        title="Escribe la cantidad y presiona Enter"
+                                    >
+                                    <a href="{% url 'agregar_al_carrito' key %}?next={% url 'ver_carrito' %}&ajax=1" class="se-btn se-btn-outline se-btn-sm cart-add-link" title="Agregar una unidad">+</a>
                                 </div>
                             </td>
                             <td class="price-cell">${{ value.precio }}</td>
                             <td class="total-cell">${{ value.total }}</td>
                             <td class="text-center">
-                                <form method="post" action="{% url 'eliminar_del_carrito' key %}" class="cart-qty-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="ajax" value="1">
-                                    <button type="submit" class="se-btn se-btn-outline-red se-btn-sm" title="Eliminar del carrito">🗑️</button>
-                                </form>
+                                <a href="{% url 'eliminar_del_carrito' key %}?ajax=1" class="se-btn se-btn-outline-red se-btn-sm cart-remove-link" title="Eliminar del carrito">🗑️</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -470,13 +496,9 @@
                 </a>
                 {% endif %}
 
-                <form action="{% url 'limpiar_carrito' %}" method="post" id="form-vaciar-carrito" style="margin-top: 12px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="ajax" value="1">
-                    <button type="submit" class="se-btn se-btn-outline-red se-btn-sm" style="width: 100%;">
-                        🗑️ Vaciar Carrito
-                    </button>
-                </form>
+                <button type="button" id="btn-vaciar-carrito" class="se-btn se-btn-outline-red se-btn-sm" style="width: 100%; margin-top: 12px;">
+                    🗑️ Vaciar Carrito
+                </button>
                 {% endif %}
 
                 <a href="{% url 'landing' %}#menu" class="se-btn se-btn-outline se-btn-sm" style="width: 100%; text-align: center; display: block; margin-top: 12px;">
@@ -487,6 +509,17 @@
     </div>
 </div>
 
+<script>
+window.ShoriCartConfig = {
+    urls: {
+        agregar: "{% url 'agregar_al_carrito' 0 %}".replace('/0/', '/__ID__/'),
+        restar: "{% url 'restar_producto' 0 %}".replace('/0/', '/__ID__/'),
+        eliminar: "{% url 'eliminar_del_carrito' 0 %}".replace('/0/', '/__ID__/'),
+        cantidad: "{% url 'set_cantidad_carrito' 0 %}".replace('/0/', '/__ID__/'),
+        limpiar: "{% url 'limpiar_carrito' %}"
+    }
+};
+</script>
 {% include "includes/app_notify.html" %}
 <script src="{% static 'JS/cart-actions.js' %}"></script>
 <script>

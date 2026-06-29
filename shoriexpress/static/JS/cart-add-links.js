@@ -1,7 +1,15 @@
 /**
- * Enlaces «agregar al carrito» con toast inmediato (landing / menú).
+ * Menú / landing: agregar al carrito con toast inmediato (sin recargar).
  */
 (function () {
+  function notify(message, type) {
+    if (typeof window.showToast === 'function') {
+      window.showToast(message, type || 'info');
+    } else if (typeof window.notifyUser === 'function') {
+      window.notifyUser(message, type || 'info');
+    }
+  }
+
   function updateCartBadge(count) {
     document.querySelectorAll('.cart-badge').forEach(function (badge) {
       if (count > 0) {
@@ -24,33 +32,31 @@
   }
 
   async function addToCart(event, link) {
-  if (document.getElementById('cart-items-body')) return;
+    if (document.getElementById('cart-items-body')) return;
     event.preventDefault();
+    notify('Agregando al carrito…', 'info');
     try {
-      const url = link.href + (link.href.includes('?') ? '&' : '?') + 'ajax=1';
+      const url = link.href + (link.href.indexOf('?') >= 0 ? '&' : '?') + 'ajax=1';
       const response = await fetch(url, {
+        method: 'GET',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'same-origin',
       });
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
-        if (typeof showToast === 'function') {
-          showToast('No se pudo agregar al carrito.', 'error');
-        }
+        notify('No se pudo agregar al carrito.', 'error');
         return;
       }
       const data = await response.json();
-      if (typeof showToast === 'function' && data.message) {
-        showToast(data.message, data.type || (data.success ? 'success' : 'error'));
+      if (data.message) {
+        notify(data.message, data.type || (data.success ? 'success' : 'error'));
       }
       if (data.success !== false) {
         updateCartBadge(data.cart_items_count || 0);
         animateCart();
       }
     } catch (err) {
-      if (typeof showToast === 'function') {
-        showToast('No se pudo agregar al carrito.', 'error');
-      }
+      notify('No se pudo agregar al carrito.', 'error');
     }
   }
 

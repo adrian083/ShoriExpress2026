@@ -117,25 +117,43 @@ class ProductoAvailabilityTest(TestCase):
     def test_restar_y_eliminar_carrito_requieren_post(self):
         with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
             self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
+            self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
 
         get_restar = self.client.get(
-            reverse('restar_producto', kwargs={'producto_id': self.producto.pk})
+            reverse('restar_producto', kwargs={'producto_id': self.producto.pk}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            data={'ajax': '1'},
         )
-        self.assertEqual(get_restar.status_code, 405)
+        self.assertEqual(get_restar.status_code, 200)
+        self.assertTrue(get_restar.json()['success'])
 
-        post_restar = self.client.post(
-            reverse('restar_producto', kwargs={'producto_id': self.producto.pk})
+        get_eliminar = self.client.get(
+            reverse('eliminar_del_carrito', kwargs={'producto_id': self.producto.pk}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            data={'ajax': '1'},
         )
-        self.assertEqual(post_restar.status_code, 302)
-        self.assertEqual(post_restar.url, reverse('ver_carrito'))
+        self.assertEqual(get_eliminar.status_code, 200)
 
-        post_eliminar = self.client.post(
-            reverse('eliminar_del_carrito', kwargs={'producto_id': self.producto.pk})
+        get_limpiar = self.client.get(
+            reverse('limpiar_carrito'),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            data={'ajax': '1'},
         )
-        self.assertEqual(post_eliminar.status_code, 302)
-
-        post_limpiar = self.client.post(reverse('limpiar_carrito'))
-        self.assertEqual(post_limpiar.status_code, 302)
+        self.assertEqual(get_limpiar.status_code, 200)
         session = self.client.session
         self.assertEqual(session.get('cart', {}), {})
+
+    def test_set_cantidad_carrito_via_get(self):
+        with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
+            self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
+
+        response = self.client.get(
+            reverse('set_cantidad_carrito', kwargs={'producto_id': self.producto.pk}),
+            {'cantidad': 3, 'ajax': '1'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['items'][0]['cantidad'], 3)
 

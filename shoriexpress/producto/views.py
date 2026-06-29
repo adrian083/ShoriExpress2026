@@ -97,7 +97,7 @@ def agregar_item(request, producto_id):
     return redirect('landing')
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
 def eliminar_item(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
@@ -109,7 +109,7 @@ def eliminar_item(request, producto_id):
     )
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
 def restar_producto(request, producto_id):
     cart = Cart(request)
     producto = get_object_or_404(Producto, pk=producto_id)
@@ -127,7 +127,64 @@ def restar_producto(request, producto_id):
     )
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
+def set_cantidad_carrito(request, producto_id):
+    """Establece la cantidad manualmente desde el carrito."""
+    raw = request.POST.get('cantidad') if request.method == 'POST' else request.GET.get('cantidad')
+    try:
+        cantidad = int(raw)
+    except (TypeError, ValueError):
+        return cart_action_response(
+            request,
+            message='Ingresa una cantidad válida (número entero).',
+            message_type='error',
+        )
+
+    if cantidad < 0:
+        return cart_action_response(
+            request,
+            message='La cantidad no puede ser negativa.',
+            message_type='error',
+        )
+
+    cart = Cart(request)
+    producto = get_object_or_404(Producto, pk=producto_id)
+
+    if cantidad == 0:
+        cart.remove(producto)
+        return cart_action_response(
+            request,
+            message=f"✓ {producto.nombre_producto} eliminado del carrito.",
+            message_type='success',
+        )
+
+    if not producto.esta_habilitado or not producto.esta_disponible:
+        return cart_action_response(
+            request,
+            message=f"❌ {producto.nombre_producto} no está disponible actualmente.",
+            message_type='error',
+        )
+
+    max_disponible = _max_unidades_por_inventario(producto)
+    msg_type = 'success'
+    msg = f"Cantidad de {producto.nombre_producto} actualizada a {cantidad}."
+    if max_disponible is not None and cantidad > max_disponible:
+        cantidad = max(0, max_disponible)
+        if cantidad == 0:
+            cart.remove(producto)
+            return cart_action_response(
+                request,
+                message=f"❌ Sin stock disponible para {producto.nombre_producto}.",
+                message_type='error',
+            )
+        msg = f"⚠️ Solo hay {cantidad} unidad(es) disponible(s) de {producto.nombre_producto}."
+        msg_type = 'warning'
+
+    cart.set_quantity(producto, cantidad)
+    return cart_action_response(request, message=msg, message_type=msg_type)
+
+
+@require_http_methods(["GET", "POST"])
 def limpiar_carrito(request):
     cart = Cart(request)
     cart.clear()

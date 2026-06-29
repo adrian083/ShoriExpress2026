@@ -239,5 +239,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // Exportar para uso global
 window.Toast = Toast;
 window.showToast = showToast;
+window.notifyUser = showToast;
 window.removeToast = removeToast;
 window.removeAllToasts = removeAllToasts;
