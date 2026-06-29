@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
@@ -8,12 +10,18 @@ from .models import DetallePedido
 def recalcular_total_pedido(sender, instance, **kwargs):
     """
     Recalcula el total del pedido cada vez que se crea, edita o elimina un detalle.
+    Si el pedido usó bonos, conserva el descuento registrado en descuento_bonos.
     """
     pedido = instance.pedido
     with transaction.atomic():
-        total = sum(
+        subtotal_lineas = sum(
             detalle.cantidad * detalle.precio_unitario_momento
             for detalle in pedido.detalles.all()
         )
+        descuento = Decimal(str(pedido.descuento_bonos or 0))
+        if pedido.usar_bonos and descuento > 0:
+            total = (subtotal_lineas - descuento).quantize(Decimal('0.01'))
+        else:
+            total = subtotal_lineas
         pedido.total_pedido = total
         pedido.save(update_fields=['total_pedido'])

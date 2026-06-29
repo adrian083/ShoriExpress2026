@@ -22,4 +22,7 @@ Sistema de gestión para restaurante de chorizos.
 
 ## Pruebas
 
-Ejecuta `python manage.py test` para correr las pruebas.
+Ejecuta `python manage.py test` para correr las pruebas (45 tests).
+
+Para verificar conexión MySQL local (XAMPP), usa:
+`python scripts/check_mysql_connection.py`
