@@ -81,33 +81,41 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px;">
+<div class="dash-charts-grid">
     <div class="se-card">
         <div class="se-card-header">
             <h3>📈 Ventas por día</h3>
+            <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-secondary);">Solo pedidos entregados</p>
         </div>
         <div class="se-card-body">
-            <canvas id="chartVentasDia" height="260"></canvas>
+            <div class="dash-chart-wrap">
+                <canvas id="chartVentasDia"></canvas>
+            </div>
         </div>
     </div>
 
     <div class="se-card">
         <div class="se-card-header">
             <h3>📊 Pedidos por estado</h3>
+            <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-secondary);">En el período filtrado</p>
         </div>
-        <div class="se-card-body" style="display: flex; justify-content: center;">
-            <canvas id="chartPedidosEstado" height="260" style="max-width: 320px;"></canvas>
+        <div class="se-card-body">
+            <div class="dash-chart-wrap dash-chart-wrap--compact">
+                <canvas id="chartPedidosEstado"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+<div class="dash-charts-grid">
     <div class="se-card">
         <div class="se-card-header">
             <h3>🏆 Productos más vendidos</h3>
         </div>
         <div class="se-card-body">
-            <canvas id="chartProductosTop" height="260"></canvas>
+            <div class="dash-chart-wrap">
+                <canvas id="chartProductosTop"></canvas>
+            </div>
         </div>
     </div>
 
@@ -115,13 +123,15 @@
         <div class="se-card-header">
             <h3>🚗 Tipo de pedido</h3>
         </div>
-        <div class="se-card-body" style="display: flex; justify-content: center;">
-            <canvas id="chartTipoPedido" height="260" style="max-width: 320px;"></canvas>
+        <div class="se-card-body">
+            <div class="dash-chart-wrap dash-chart-wrap--compact">
+                <canvas id="chartTipoPedido"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+<div class="dash-charts-grid">
     <div class="se-card">
         <div class="se-card-header">
             <h3>⚠️ Insumos con poco stock</h3>

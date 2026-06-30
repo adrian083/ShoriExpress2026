@@ -26,6 +26,26 @@ from usuario.models import Usuario
 from movimiento_inventario.models import MovimientoInventario
 
 
+def _rellenar_ventas_por_dia(fecha_inicio, fecha_fin, filas):
+    """Completa días sin ventas con ceros para que la gráfica no se vea rota."""
+    por_fecha = {row['fecha']: row for row in filas if row.get('fecha')}
+    inicio = fecha_inicio.date()
+    fin = min(fecha_fin.date(), timezone.localdate())
+    if inicio > fin:
+        inicio, fin = fin, inicio
+
+    resultado = []
+    dia = inicio
+    while dia <= fin:
+        clave = dia.strftime('%Y-%m-%d')
+        if clave in por_fecha:
+            resultado.append(por_fecha[clave])
+        else:
+            resultado.append({'fecha': clave, 'total': 0.0, 'cantidad': 0})
+        dia += timedelta(days=1)
+    return resultado
+
+
 @admin_shori_required
 @require_GET
 def dashboard_data_api(request):
@@ -41,7 +61,9 @@ def dashboard_data_api(request):
     if fecha_inicio_str:
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
-            fecha_inicio = timezone.make_aware(fecha_inicio)
+            fecha_inicio = timezone.make_aware(
+                fecha_inicio.replace(hour=0, minute=0, second=0, microsecond=0)
+            )
         except ValueError:
             fecha_inicio = now - timedelta(days=30)
     else:
@@ -50,11 +72,16 @@ def dashboard_data_api(request):
     if fecha_fin_str:
         try:
             fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
-            fecha_fin = timezone.make_aware(fecha_fin.replace(hour=23, minute=59, second=59))
+            fecha_fin = timezone.make_aware(
+                fecha_fin.replace(hour=23, minute=59, second=59, microsecond=999999)
+            )
         except ValueError:
             fecha_fin = now
     else:
         fecha_fin = now
+
+    if fecha_inicio > fecha_fin:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
 
     # ── KPI Cards ──
     pedidos_periodo = Pedido.objects.filter(fecha_pedido__range=[fecha_inicio, fecha_fin])
@@ -82,9 +109,9 @@ def dashboard_data_api(request):
 
     total_productos = Producto.objects.count()
 
-    # ── Pedidos por Estado ──
+    # ── Pedidos por Estado (mismo período) ──
     pedidos_por_estado = list(
-        Pedido.objects.values('estado_pedido').annotate(
+        pedidos_periodo.values('estado_pedido').annotate(
             cantidad=Count('id')
         ).order_by('estado_pedido')
     )
@@ -104,6 +131,9 @@ def dashboard_data_api(request):
     for item in ventas_por_dia:
         item['fecha'] = item['fecha'].strftime('%Y-%m-%d') if item['fecha'] else ''
         item['total'] = float(item['total']) if item['total'] else 0
+        item['cantidad'] = int(item.get('cantidad') or 0)
+
+    ventas_por_dia = _rellenar_ventas_por_dia(fecha_inicio, fecha_fin, ventas_por_dia)
 
     # ── Productos más vendidos (Top 5) ──
     productos_top = list(

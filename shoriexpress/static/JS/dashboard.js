@@ -7,29 +7,85 @@ let timeoutOcultarAlerta = null;
 
 const COLORS = {
     red: '#DC2626',
-    redLight: 'rgba(220, 38, 38, 0.2)',
+    redLight: 'rgba(220, 38, 38, 0.75)',
     dark: '#111111',
-    darkLight: 'rgba(17, 17, 17, 0.1)',
+    darkLight: 'rgba(17, 17, 17, 0.65)',
     success: '#16A34A',
-    successLight: 'rgba(22, 163, 74, 0.2)',
+    successLight: 'rgba(22, 163, 74, 0.75)',
     warning: '#D97706',
-    warningLight: 'rgba(217, 119, 6, 0.2)',
+    warningLight: 'rgba(217, 119, 6, 0.75)',
     info: '#2563EB',
-    infoLight: 'rgba(37, 99, 235, 0.2)',
+    infoLight: 'rgba(37, 99, 235, 0.75)',
     neutral: '#6B7280',
-    neutralLight: 'rgba(107, 114, 128, 0.2)',
+    neutralLight: 'rgba(107, 114, 128, 0.35)',
 };
 
 const ESTADO_COLORS = {
-    'pendiente': { bg: COLORS.warningLight, border: COLORS.warning },
-    'preparacion': { bg: COLORS.infoLight, border: COLORS.info },
-    'listo': { bg: COLORS.successLight, border: COLORS.success },
-    'entregado': { bg: COLORS.successLight, border: COLORS.success },
-    'cancelado': { bg: COLORS.redLight, border: COLORS.red },
+    pendiente: { bg: COLORS.warningLight, border: COLORS.warning },
+    preparacion: { bg: COLORS.infoLight, border: COLORS.info },
+    listo: { bg: COLORS.successLight, border: COLORS.success },
+    entregado: { bg: 'rgba(22, 163, 74, 0.55)', border: COLORS.success },
+    cancelado: { bg: COLORS.redLight, border: COLORS.red },
 };
 
+const ESTADO_LABELS = {
+    pendiente: 'Pendiente',
+    preparacion: 'En preparación',
+    listo: 'Listo',
+    entregado: 'Entregado',
+    cancelado: 'Cancelado',
+};
+
+const TIPO_LABELS = {
+    local: 'Para comer aquí',
+    llevar: 'Para llevar',
+    domicilio: 'Domicilio',
+};
+
+function isDarkTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function chartThemeOptions() {
+    const dark = isDarkTheme();
+    return {
+        text: dark ? '#e5e5e5' : '#374151',
+        grid: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        border: dark ? '#404040' : '#ffffff',
+    };
+}
+
 function formatCurrency(value) {
-    return '$' + Number(value).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return '$' + Number(value || 0).toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    });
+}
+
+function destroyChart(chartRef) {
+    if (chartRef) {
+        chartRef.destroy();
+    }
+    return null;
+}
+
+function showChartEmpty(canvasId, message) {
+    const wrap = document.getElementById(canvasId)?.closest('.dash-chart-wrap');
+    if (!wrap) return;
+    let note = wrap.querySelector('.dash-chart-empty');
+    if (!note) {
+        note = document.createElement('p');
+        note.className = 'dash-chart-empty';
+        wrap.appendChild(note);
+    }
+    note.textContent = message;
+    note.hidden = false;
+}
+
+function hideChartEmpty(canvasId) {
+    const wrap = document.getElementById(canvasId)?.closest('.dash-chart-wrap');
+    const note = wrap?.querySelector('.dash-chart-empty');
+    if (note) note.hidden = true;
 }
 
 function setDefaultDates() {
@@ -60,10 +116,10 @@ function cargarDashboard() {
     const fechaFin = document.getElementById('filtroFechaFin').value;
 
     let url = '/dashboard/api/dashboard-data/?';
-    if (fechaInicio) url += 'fecha_inicio=' + fechaInicio + '&';
-    if (fechaFin) url += 'fecha_fin=' + fechaFin;
+    if (fechaInicio) url += 'fecha_inicio=' + encodeURIComponent(fechaInicio) + '&';
+    if (fechaFin) url += 'fecha_fin=' + encodeURIComponent(fechaFin);
 
-    fetch(url)
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Respuesta no OK en dashboard-data: ' + response.status);
@@ -72,12 +128,12 @@ function cargarDashboard() {
         })
         .then(data => {
             actualizarKPIs(data.kpis);
-            renderChartVentasDia(data.ventas_por_dia);
-            renderChartPedidosEstado(data.pedidos_por_estado);
-            renderChartProductosTop(data.productos_top);
-            renderChartTipoPedido(data.pedidos_por_tipo);
-            renderTablaInsumosCriticos(data.insumos_criticos);
-            renderTablaMovimientos(data.movimientos_recientes);
+            renderChartVentasDia(data.ventas_por_dia || []);
+            renderChartPedidosEstado(data.pedidos_por_estado || []);
+            renderChartProductosTop(data.productos_top || []);
+            renderChartTipoPedido(data.pedidos_por_tipo || []);
+            renderTablaInsumosCriticos(data.insumos_criticos || []);
+            renderTablaMovimientos(data.movimientos_recientes || []);
         })
         .catch(err => {
             console.error('Error cargando dashboard:', err);
@@ -134,14 +190,22 @@ function renderChartVentasDia(data) {
     const ctx = document.getElementById('chartVentasDia');
     if (!ctx) return;
 
-    if (chartVentasDia) chartVentasDia.destroy();
+    chartVentasDia = destroyChart(chartVentasDia);
+    const theme = chartThemeOptions();
+
+    const totalVentas = data.reduce((sum, d) => sum + Number(d.total || 0), 0);
+    if (!data.length || totalVentas === 0) {
+        showChartEmpty('chartVentasDia', 'No hay ventas entregadas en este período.');
+        return;
+    }
+    hideChartEmpty('chartVentasDia');
 
     const labels = data.map(d => {
-        const parts = d.fecha.split('-');
-        return parts[2] + '/' + parts[1];
+        const parts = (d.fecha || '').split('-');
+        return parts.length === 3 ? parts[2] + '/' + parts[1] : d.fecha;
     });
-    const valores = data.map(d => d.total);
-    const cantidades = data.map(d => d.cantidad);
+    const valores = data.map(d => Number(d.total || 0));
+    const cantidades = data.map(d => Number(d.cantidad || 0));
 
     chartVentasDia = new Chart(ctx, {
         type: 'bar',
@@ -151,63 +215,70 @@ function renderChartVentasDia(data) {
                 {
                     label: 'Ventas ($)',
                     data: valores,
-                    backgroundColor: COLORS.redLight,
+                    backgroundColor: 'rgba(220, 38, 38, 0.55)',
                     borderColor: COLORS.red,
-                    borderWidth: 2,
+                    borderWidth: 1,
                     borderRadius: 6,
                     yAxisID: 'y',
+                    order: 2,
                 },
                 {
-                    label: 'Pedidos',
+                    label: 'Pedidos entregados',
                     data: cantidades,
                     type: 'line',
                     borderColor: COLORS.dark,
-                    backgroundColor: COLORS.darkLight,
+                    backgroundColor: 'rgba(17, 17, 17, 0.08)',
                     borderWidth: 2,
-                    pointRadius: 4,
+                    pointRadius: 3,
                     pointBackgroundColor: COLORS.dark,
-                    tension: 0.3,
+                    tension: 0.25,
                     yAxisID: 'y1',
-                }
-            ]
+                    order: 1,
+                },
+            ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+                legend: {
+                    position: 'top',
+                    labels: { color: theme.text, usePointStyle: true, padding: 12 },
+                },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label(context) {
                             if (context.dataset.label === 'Ventas ($)') {
                                 return 'Ventas: ' + formatCurrency(context.raw);
                             }
                             return 'Pedidos: ' + context.raw;
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     position: 'left',
                     ticks: {
-                        callback: function(value) { return formatCurrency(value); }
+                        color: theme.text,
+                        callback(value) { return formatCurrency(value); },
                     },
-                    grid: { color: 'rgba(0,0,0,0.05)' }
+                    grid: { color: theme.grid },
                 },
                 y1: {
                     beginAtZero: true,
                     position: 'right',
                     grid: { drawOnChartArea: false },
-                    ticks: { stepSize: 1 }
+                    ticks: { color: theme.text, stepSize: 1, precision: 0 },
                 },
                 x: {
-                    grid: { display: false }
-                }
-            }
-        }
+                    ticks: { color: theme.text, maxRotation: 45, minRotation: 0 },
+                    grid: { display: false },
+                },
+            },
+        },
     });
 }
 
@@ -215,11 +286,20 @@ function renderChartPedidosEstado(data) {
     const ctx = document.getElementById('chartPedidosEstado');
     if (!ctx) return;
 
-    if (chartPedidosEstado) chartPedidosEstado.destroy();
+    chartPedidosEstado = destroyChart(chartPedidosEstado);
+    const theme = chartThemeOptions();
 
-    const labels = data.map(d => d.estado_pedido.charAt(0).toUpperCase() + d.estado_pedido.slice(1));
-    const valores = data.map(d => d.cantidad);
-    const borderColors = data.map(d => (ESTADO_COLORS[d.estado_pedido] || { border: COLORS.neutral }).border);
+    const filtered = data.filter(d => Number(d.cantidad) > 0);
+    if (!filtered.length) {
+        showChartEmpty('chartPedidosEstado', 'No hay pedidos en el período seleccionado.');
+        return;
+    }
+    hideChartEmpty('chartPedidosEstado');
+
+    const labels = filtered.map(d => ESTADO_LABELS[d.estado_pedido] || d.estado_pedido);
+    const valores = filtered.map(d => d.cantidad);
+    const bgColors = filtered.map(d => (ESTADO_COLORS[d.estado_pedido] || { bg: COLORS.neutralLight }).bg);
+    const borderColors = filtered.map(d => (ESTADO_COLORS[d.estado_pedido] || { border: COLORS.neutral }).border);
 
     chartPedidosEstado = new Chart(ctx, {
         type: 'doughnut',
@@ -227,23 +307,23 @@ function renderChartPedidosEstado(data) {
             labels: labels,
             datasets: [{
                 data: valores,
-                backgroundColor: borderColors,
-                borderColor: '#fff',
-                borderWidth: 3,
-                hoverOffset: 8,
-            }]
+                backgroundColor: bgColors,
+                borderColor: theme.border,
+                borderWidth: 2,
+                hoverOffset: 6,
+            }],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '60%',
+            cutout: '58%',
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { usePointStyle: true, padding: 16, font: { size: 12 } }
-                }
-            }
-        }
+                    labels: { color: theme.text, usePointStyle: true, padding: 12, font: { size: 11 } },
+                },
+            },
+        },
     });
 }
 
@@ -251,62 +331,60 @@ function renderChartProductosTop(data) {
     const ctx = document.getElementById('chartProductosTop');
     if (!ctx) return;
 
-    if (chartProductosTop) chartProductosTop.destroy();
+    chartProductosTop = destroyChart(chartProductosTop);
+    const theme = chartThemeOptions();
 
-    if (data.length === 0) {
-        chartProductosTop = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: ['Sin datos'], datasets: [{ data: [0], backgroundColor: COLORS.neutralLight }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+    if (!data.length) {
+        showChartEmpty('chartProductosTop', 'Aún no hay productos vendidos en este período.');
         return;
     }
+    hideChartEmpty('chartProductosTop');
 
-    const labels = data.map(d => d.nombre);
-    const cantidades = data.map(d => d.total_vendido);
-    const ingresos = data.map(d => d.ingresos);
+    const labels = data.map(d => d.nombre || 'Producto');
+    const cantidades = data.map(d => Number(d.total_vendido || 0));
+    const ingresos = data.map(d => Number(d.ingresos || 0));
 
     chartProductosTop = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: 'Unidades Vendidas',
-                    data: cantidades,
-                    backgroundColor: COLORS.red,
-                    borderRadius: 6,
-                },
-                {
-                    label: 'Ingresos ($)',
-                    data: ingresos,
-                    backgroundColor: COLORS.dark,
-                    borderRadius: 6,
-                }
-            ]
+            datasets: [{
+                label: 'Unidades vendidas',
+                data: cantidades,
+                backgroundColor: COLORS.red,
+                borderRadius: 6,
+            }],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: 'y',
             plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            if (context.dataset.label.includes('Ingresos')) {
-                                return 'Ingresos: ' + formatCurrency(context.raw);
-                            }
-                            return 'Vendidos: ' + context.raw;
-                        }
-                    }
-                }
+                        label(context) {
+                            const idx = context.dataIndex;
+                            return [
+                                'Unidades: ' + context.raw,
+                                'Ingresos: ' + formatCurrency(ingresos[idx]),
+                            ];
+                        },
+                    },
+                },
             },
             scales: {
-                x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                y: { grid: { display: false } }
-            }
-        }
+                x: {
+                    beginAtZero: true,
+                    ticks: { color: theme.text, stepSize: 1, precision: 0 },
+                    grid: { color: theme.grid },
+                },
+                y: {
+                    ticks: { color: theme.text },
+                    grid: { display: false },
+                },
+            },
+        },
     });
 }
 
@@ -314,10 +392,19 @@ function renderChartTipoPedido(data) {
     const ctx = document.getElementById('chartTipoPedido');
     if (!ctx) return;
 
-    if (chartTipoPedido) chartTipoPedido.destroy();
+    chartTipoPedido = destroyChart(chartTipoPedido);
+    const theme = chartThemeOptions();
 
-    const labels = data.map(d => d.tipo_pedido);
-    const valores = data.map(d => d.cantidad);
+    const filtered = data.filter(d => Number(d.cantidad) > 0);
+    if (!filtered.length) {
+        showChartEmpty('chartTipoPedido', 'No hay pedidos por tipo en este período.');
+        return;
+    }
+    hideChartEmpty('chartTipoPedido');
+
+    const labels = filtered.map(d => TIPO_LABELS[d.tipo_pedido] || d.tipo_pedido);
+    const valores = filtered.map(d => d.cantidad);
+    const palette = [COLORS.red, COLORS.dark, COLORS.info, COLORS.warning];
 
     chartTipoPedido = new Chart(ctx, {
         type: 'pie',
@@ -325,11 +412,11 @@ function renderChartTipoPedido(data) {
             labels: labels,
             datasets: [{
                 data: valores,
-                backgroundColor: [COLORS.red, COLORS.dark, COLORS.info, COLORS.warning],
-                borderColor: '#fff',
-                borderWidth: 3,
-                hoverOffset: 8,
-            }]
+                backgroundColor: palette.slice(0, valores.length),
+                borderColor: theme.border,
+                borderWidth: 2,
+                hoverOffset: 6,
+            }],
         },
         options: {
             responsive: true,
@@ -337,10 +424,10 @@ function renderChartTipoPedido(data) {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { usePointStyle: true, padding: 16, font: { size: 12 } }
-                }
-            }
-        }
+                    labels: { color: theme.text, usePointStyle: true, padding: 12, font: { size: 11 } },
+                },
+            },
+        },
     });
 }
 
@@ -379,10 +466,11 @@ function renderTablaMovimientos(data) {
     }
 
     const tipoLabels = {
-        'entrada': '<span class="se-badge se-badge-success">Entrada</span>',
-        'salida_venta': '<span class="se-badge se-badge-warning">Venta</span>',
-        'salida_desperdicio': '<span class="se-badge se-badge-danger">Desperdicio</span>',
-        'ajuste': '<span class="se-badge se-badge-info">Ajuste</span>',
+        entrada: '<span class="se-badge se-badge-success">Entrada</span>',
+        entrada_inicial: '<span class="se-badge se-badge-success">Entrada</span>',
+        salida_venta: '<span class="se-badge se-badge-warning">Venta</span>',
+        salida_desperdicio: '<span class="se-badge se-badge-danger">Desperdicio</span>',
+        ajuste: '<span class="se-badge se-badge-info">Ajuste</span>',
     };
 
     let html = '';
@@ -404,3 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
     revisarNuevosPedidos();
     setInterval(revisarNuevosPedidos, 15000);
 });
+
+window.cargarDashboard = cargarDashboard;
+window.resetFiltros = resetFiltros;
