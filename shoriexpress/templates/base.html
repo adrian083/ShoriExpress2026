@@ -160,9 +160,6 @@
     <div class="se-topbar-spacer"></div>
     <div class="se-topbar-actions">
         <button type="button" class="se-topbar-icon-btn" data-tutorial-open title="Tutorial" aria-label="Abrir tutorial">❓</button>
-        <button type="button" class="se-topbar-icon-btn" data-theme-toggle onclick="ShoriTheme.toggle()" title="Cambiar tema" aria-label="Cambiar tema">
-            <span data-theme-icon>🌙</span>
-        </button>
     </div>
     {% if request.session.usuario_nombre %}
     <span style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 500; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px;">
@@ -191,6 +188,9 @@
         overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
+
+    // Menú siempre cerrado al cargar la página
+    closeSidebar();
 
     document.querySelectorAll('.se-sidebar-link').forEach(link => {
         link.addEventListener('click', () => {

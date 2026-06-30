@@ -182,7 +182,10 @@ a:hover {
   transform: translateX(0);
 }
 
-/* Sidebar oculto hasta abrir con hamburguesa (todas las pantallas) */
+/* Siempre oculto hasta pulsar ☰ — sin excepción en pantallas grandes */
+.se-sidebar:not(.open) {
+  transform: translateX(-100%);
+}
 
 /* ---------- Sidebar Header ---------- */
 .se-sidebar-header {
