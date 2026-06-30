@@ -183,4 +183,30 @@
         <div class="dash-icon">🔑</div>
         <h3>Roles</h3>
         <p>Gestiona roles del sistema.</p>
-        <a href="{% url 'lista_roles' %}" class="se-btn se-btn
+        <a href="{% url 'lista_roles' %}" class="se-btn se-btn-primary se-btn-sm">Ir a Roles</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">📋</div>
+        <h3>Recetas</h3>
+        <p>Fichas técnicas de preparación.</p>
+        <a href="{% url 'lista_recetas' %}" class="se-btn se-btn-primary se-btn-sm">Ver Recetas</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">🔄</div>
+        <h3>Movimientos</h3>
+        <p>Entradas y salidas de inventario.</p>
+        <a href="{% url 'lista_movimientos' %}" class="se-btn se-btn-primary se-btn-sm">Ver Movimientos</a>
+    </div>
+    <div class="se-dash-card">
+        <div class="dash-icon">💳</div>
+        <h3>Métodos de Pago</h3>
+        <p>Administra formas de pago.</p>
+        <a href="{% url 'lista_metodos' %}" class="se-btn se-btn-primary se-btn-sm">Ver Métodos</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
+        crossorigin="anonymous"></script>
+<script src="{% static 'JS/dashboard.js' %}"></script>
+{% endblock %}
