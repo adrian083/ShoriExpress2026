@@ -137,9 +137,12 @@
             🚪 Cerrar Sesión
         </a>
         {% endif %}
-        <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeBtn" title="Cambiar tema" aria-label="Cambiar tema">
-            <span id="themeIcon">🌙</span>
-            <span id="themeText">Modo Oscuro</span>
+        <button class="theme-toggle-sidebar" type="button" data-theme-toggle onclick="ShoriTheme.toggle()" id="themeBtn" title="Cambiar tema" aria-label="Cambiar tema">
+            <span data-theme-icon id="themeIcon">🌙</span>
+            <span data-theme-label id="themeText">Modo oscuro</span>
+        </button>
+        <button type="button" class="se-btn se-btn-outline se-btn-sm" data-tutorial-open style="width:100%; margin-top:8px;">
+            ❓ Ver tutorial
         </button>
     </div>
 </aside>
@@ -155,6 +158,12 @@
         <span style="font-weight: 600; font-size: 1rem; color: rgba(255,255,255,0.95);">Shori Express</span>
     </a>
     <div class="se-topbar-spacer"></div>
+    <div class="se-topbar-actions">
+        <button type="button" class="se-topbar-icon-btn" data-tutorial-open title="Tutorial" aria-label="Abrir tutorial">❓</button>
+        <button type="button" class="se-topbar-icon-btn" data-theme-toggle onclick="ShoriTheme.toggle()" title="Cambiar tema" aria-label="Cambiar tema">
+            <span data-theme-icon>🌙</span>
+        </button>
+    </div>
     {% if request.session.usuario_nombre %}
     <span style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 500; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px;">
         👤 {{ request.session.usuario_nombre }}
@@ -185,39 +194,9 @@
 
     document.querySelectorAll('.se-sidebar-link').forEach(link => {
         link.addEventListener('click', () => {
-            if (window.innerWidth < 1024) {
-                closeSidebar();
-            }
+            closeSidebar();
         });
     });
-
-    function toggleTheme() {
-        const html = document.documentElement;
-        const icon = document.getElementById('themeIcon');
-        const text = document.getElementById('themeText');
-        if (html.getAttribute('data-theme') === 'dark') {
-            html.setAttribute('data-theme', 'light');
-            icon.textContent = '🌙';
-            text.textContent = 'Modo Oscuro';
-            localStorage.setItem('shori-theme', 'light');
-        } else {
-            html.setAttribute('data-theme', 'dark');
-            icon.textContent = '☀️';
-            text.textContent = 'Modo Claro';
-            localStorage.setItem('shori-theme', 'dark');
-        }
-    }
-
-    (function() {
-        const saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            const icon = document.getElementById('themeIcon');
-            const text = document.getElementById('themeText');
-            if(icon) icon.textContent = '☀️';
-            if(text) text.textContent = 'Modo Claro';
-        }
-    })();
 
     (function() {
         const currentPath = window.location.pathname;
@@ -231,6 +210,7 @@
         });
     })();
 </script>
+{% include "includes/admin_extras.html" %}
 {% include "includes/app_notify.html" %}
 </body>
 </html>

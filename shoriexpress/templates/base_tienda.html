@@ -70,6 +70,10 @@
 
             <!-- Menú Desktop -->
             <div class="nav-menu-desktop">
+                <button type="button" class="se-theme-toggle-btn" data-theme-toggle onclick="ShoriTheme.toggle()" title="Cambiar tema" aria-label="Cambiar tema">
+                    <span data-theme-icon>🌙</span>
+                </button>
+                <button type="button" class="se-topbar-icon-btn" data-tutorial-open title="Tutorial" aria-label="Abrir tutorial" style="color:#fff;border-color:rgba(255,255,255,0.25);">❓</button>
                 {% if usuario_logueado %}
                     {% if es_admin %}
                         <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm">📊 Dashboard</a>
@@ -100,6 +104,11 @@
     <a href="{% url 'menu_publico' %}" class="landing-mobile-link">Menú</a>
     
     <div class="landing-mobile-actions">
+        <button type="button" class="se-theme-toggle-btn" data-theme-toggle onclick="ShoriTheme.toggle()">
+            <span data-theme-icon>🌙</span>
+            <span data-theme-label>Modo oscuro</span>
+        </button>
+        <button type="button" class="se-topbar-icon-btn" data-tutorial-open>❓ Ver tutorial</button>
         {% if usuario_logueado %}
             {% if es_admin %}
                 <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%; margin-bottom: 8px;">📊 Dashboard</a>
@@ -119,10 +128,6 @@
 </div>
 
 <script>
-    (function() {
-        var saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
     const hamburger = document.getElementById('hamburgerBtn');
     const mobileMenu = document.getElementById('mobileMenu');
 
@@ -132,13 +137,8 @@
             mobileMenu.classList.toggle('open');
         });
     }
-
-    // Asegurarse de que el tema oscuro se aplique si está guardado
-    (function() {
-        var saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
 </script>
+{% include "includes/client_extras.html" %}
 {% include "includes/app_notify.html" %}
 {% block extra_js %}{% endblock %}
 </body>

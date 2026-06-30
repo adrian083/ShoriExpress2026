@@ -314,6 +314,7 @@
     </div>
 </footer>
 
+{% include "includes/client_extras.html" %}
 {% include "includes/app_notify.html" %}
 <script src="{% static 'JS/cart-add-links.js' %}"></script>
 
@@ -378,14 +379,6 @@
         el.classList.add('animate-on-scroll');
         observer.observe(el);
     });
-
-    // Theme
-    (function() {
-        const saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
 </script>
 
 </body>

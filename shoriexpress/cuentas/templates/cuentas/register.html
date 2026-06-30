@@ -11,6 +11,10 @@
 </head>
 <body class="landing-body">
 
+<button type="button" class="auth-theme-toggle se-theme-toggle-btn" data-theme-toggle onclick="ShoriTheme.toggle()" title="Cambiar tema" aria-label="Cambiar tema">
+    <span data-theme-icon>🌙</span>
+</button>
+
 <div class="auth-page">
     <div class="auth-container auth-container-wide">
         <div class="auth-branding">
@@ -169,13 +173,9 @@
         }
     });
 
-    (function() {
-        const saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
 </script>
+<link rel="stylesheet" href="{% static 'tutorial.css' %}">
+<script src="{% static 'JS/theme.js' %}"></script>
 {% include "includes/app_notify.html" %}
 
 </body>

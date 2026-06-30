@@ -520,16 +520,10 @@ window.ShoriCartConfig = {
     }
 };
 </script>
+{% include "includes/client_extras.html" %}
 {% include "includes/app_notify.html" %}
 <script src="{% static 'JS/cart-actions.js' %}"></script>
 <script>
-    (function() {
-        const saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-
     // Validación de horario comercial
     function validarHorarioComercial() {
         fetch('{% url "api_horario" %}')

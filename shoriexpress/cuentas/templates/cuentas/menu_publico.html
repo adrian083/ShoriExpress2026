@@ -142,11 +142,8 @@
     </div>
 </footer>
 
-<script>
-    (function() {
-        var saved = localStorage.getItem('shori-theme');
-        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
-</script>
+{% include "includes/client_extras.html" %}
+{% include "includes/app_notify.html" %}
+<script src="{% static 'JS/cart-add-links.js' %}"></script>
 </body>
 </html>

@@ -42,6 +42,10 @@
 
             <!-- Menú Desktop -->
             <div class="nav-menu-desktop">
+                <button type="button" class="se-theme-toggle-btn" data-theme-toggle onclick="ShoriTheme.toggle()" title="Cambiar tema" aria-label="Cambiar tema">
+                    <span data-theme-icon>🌙</span>
+                </button>
+                <button type="button" class="se-topbar-icon-btn" data-tutorial-open title="Tutorial" aria-label="Abrir tutorial" style="color:#fff;border-color:rgba(255,255,255,0.25);">❓</button>
                 {% if usuario_logueado %}
                     {% if es_admin %}
                         <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm">
@@ -90,6 +94,11 @@
     {% endif %}
     
     <div class="landing-mobile-actions">
+        <button type="button" class="se-theme-toggle-btn" data-theme-toggle onclick="ShoriTheme.toggle()">
+            <span data-theme-icon>🌙</span>
+            <span data-theme-label>Modo oscuro</span>
+        </button>
+        <button type="button" class="se-topbar-icon-btn" data-tutorial-open>❓ Ver tutorial</button>
         {% if usuario_logueado %}
             {% if es_admin %}
                 <a href="{% url 'home' %}" class="se-btn se-btn-outline-red se-btn-sm" style="width:100%;">📊 Dashboard</a>

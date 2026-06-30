@@ -1,0 +1,35 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'tutorial.css' %}">
+<script type="application/json" id="shori-tutorial-data">
+{
+  "storageKey": "shori-tutorial-client-v1",
+  "steps": [
+    {
+      "title": "Bienvenido a Shori Express",
+      "body": "Explora el menú, elige tus productos favoritos y agrégalos al carrito con un clic."
+    },
+    {
+      "title": "Tu carrito",
+      "body": "En el carrito puedes sumar, restar o escribir la cantidad que quieres. Luego confirma el pedido."
+    },
+    {
+      "title": "Cuenta y pedidos",
+      "body": "Inicia sesión o regístrate para pagar. En «Mis pedidos» ves el estado de cada compra."
+    },
+    {
+      "title": "Bonos de fidelidad",
+      "body": "Ganas bonos cuando tu pedido es entregado y supera $50.000. Con 5 bonos obtienes 5% de descuento."
+    },
+    {
+      "title": "Modo oscuro o claro",
+      "body": "Usa el botón de luna o sol en la barra superior para cambiar el tema cuando quieras."
+    },
+    {
+      "title": "¿Necesitas ayuda?",
+      "body": "Pulsa el botón ❓ en cualquier momento para volver a ver esta guía."
+    }
+  ]
+}
+</script>
+<script src="{% static 'JS/theme.js' %}"></script>
+<script src="{% static 'JS/tutorial.js' %}"></script>

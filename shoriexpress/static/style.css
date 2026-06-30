@@ -182,17 +182,7 @@ a:hover {
   transform: translateX(0);
 }
 
-/* On large screens, sidebar is always visible */
-@media (min-width: 1024px) {
-  .se-sidebar {
-    transform: translateX(0);
-    box-shadow: none;
-  }
-
-  .se-overlay {
-    display: none;
-  }
-}
+/* Sidebar oculto hasta abrir con hamburguesa (todas las pantallas) */
 
 /* ---------- Sidebar Header ---------- */
 .se-sidebar-header {
@@ -247,11 +237,7 @@ a:hover {
   color: var(--text-primary);
 }
 
-@media (min-width: 1024px) {
-  .se-sidebar-close {
-    display: none;
-  }
-}
+/* Botón cerrar visible en desktop y móvil */
 
 /* ---------- Sidebar Nav ---------- */
 .se-sidebar-nav {
@@ -357,12 +343,6 @@ a:hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-@media (min-width: 1024px) {
-  .se-topbar {
-    margin-left: var(--sidebar-width);
-  }
-}
-
 .se-topbar-brand {
   display: flex;
   align-items: center;
@@ -379,10 +359,10 @@ a:hover {
   font-size: 0.75rem;
 }
 
-@media (min-width: 1024px) {
-  .se-topbar-brand {
-    display: none;
-  }
+.se-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .se-topbar-spacer {
@@ -418,11 +398,7 @@ a:hover {
   transition: var(--transition);
 }
 
-@media (min-width: 1024px) {
-  .se-hamburger {
-    display: none;
-  }
-}
+/* Hamburguesa visible en todas las pantallas */
 
 /* ============================================================
    MAIN CONTENT WRAPPER
@@ -433,13 +409,7 @@ a:hover {
   padding: 28px 24px 60px;
 }
 
-@media (min-width: 1024px) {
-  .se-main {
-    margin-left: var(--sidebar-width);
-    max-width: calc(1200px + var(--sidebar-width));
-    padding: 32px 40px 60px;
-  }
-}
+/* Sin margen lateral fijo: el menú es desplegable */
 
 /* ============================================================
    PAGE HEADER

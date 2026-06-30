@@ -1,0 +1,35 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'tutorial.css' %}">
+<script type="application/json" id="shori-tutorial-data">
+{
+  "storageKey": "shori-tutorial-admin-v1",
+  "steps": [
+    {
+      "title": "Panel de control",
+      "body": "El dashboard resume ventas, pedidos del día, stock bajo y actividad reciente del negocio."
+    },
+    {
+      "title": "Gestión de pedidos",
+      "body": "En Pedidos cambia el estado: pendiente → preparación → listo → entregado. Al entregar se acreditan bonos al cliente."
+    },
+    {
+      "title": "Inventario y productos",
+      "body": "Administra insumos, productos y recetas. El stock disponible afecta qué se puede vender en la tienda."
+    },
+    {
+      "title": "Menú de navegación ☰",
+      "body": "Usa el botón hamburguesa arriba a la izquierda para abrir el menú y saltar entre módulos."
+    },
+    {
+      "title": "Ventas y recibos",
+      "body": "Revisa métodos de pago, recibos y detalles de facturación en la sección Ventas."
+    },
+    {
+      "title": "Configuración y tienda",
+      "body": "Ajusta horarios y respaldos en Configuración. Desde el menú puedes ir a la tienda pública o cambiar el tema."
+    }
+  ]
+}
+</script>
+<script src="{% static 'JS/theme.js' %}"></script>
+<script src="{% static 'JS/tutorial.js' %}"></script>
