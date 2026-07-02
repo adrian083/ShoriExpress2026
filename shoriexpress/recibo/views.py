@@ -17,6 +17,7 @@ from pedido.models import Pedido
 from dashboard.models import ConfiguracionSistema
 
 from .models import Recibo
+from .services import calcular_totales_desde_pedido, generar_recibo_si_aplica, sincronizar_recibo_con_pedido
 
 
 @super_admin_required
@@ -57,58 +58,134 @@ def detalle_recibo(request, id):
 @super_admin_required
 @require_http_methods(["GET", "POST"])
 def crear_recibo(request):
-    """Crea un nuevo recibo para un pedido existente"""
-    pedidos = Pedido.objects.filter(recibo__isnull=True).order_by("-pk")
+    """Genera recibo automático: solo elige pedido y método de pago."""
+    pedidos = Pedido.objects.filter(recibo__isnull=True).prefetch_related('detalles').order_by("-pk")
     metodos = MetodoPago.objects.filter(esta_activo=True)
     config = ConfiguracionSistema.get_config()
+
+    pedidos_con_totales = []
+    for pedido in pedidos:
+        if pedido.detalles.exists():
+            subtotal, iva, total = calcular_totales_desde_pedido(pedido)
+        else:
+            subtotal = iva = Decimal("0")
+            total = Decimal(str(pedido.total_pedido or 0))
+        pedidos_con_totales.append({
+            "pedido": pedido,
+            "subtotal": subtotal,
+            "iva": iva,
+            "total": total,
+        })
 
     if request.method == 'POST':
         ped_id = request.POST.get('id_pedido')
         met_id = request.POST.get('id_metodo_pago')
-        total = Decimal(request.POST.get('total', 0))
-        
+        confirmacion_manual = request.POST.get('confirmacion_manual') == '1'
+
         if not ped_id or not met_id:
             messages.error(request, "Debe seleccionar un pedido y método de pago.")
             return render(request, 'recibo/form_recibo.html', {
-                'pedidos': pedidos,
+                'pedidos_con_totales': pedidos_con_totales,
                 'metodos': metodos,
+                'config': config,
+                'modo_automatico': True,
+                'es_recibo_manual': True,
+            })
+
+        if not confirmacion_manual:
+            messages.warning(
+                request,
+                "Debes confirmar que entiendes que crear un recibo manual es un caso excepcional.",
+            )
+            return render(request, 'recibo/form_recibo.html', {
+                'pedidos_con_totales': pedidos_con_totales,
+                'metodos': metodos,
+                'config': config,
+                'modo_automatico': True,
+                'es_recibo_manual': True,
+                'pedido_preseleccionado': ped_id,
+                'metodo_preseleccionado': met_id,
             })
 
         if Recibo.objects.filter(pedido_id=ped_id).exists():
             messages.error(request, "Ese pedido ya tiene un recibo. Edita el existente o elige otro pedido.")
             return render(request, 'recibo/form_recibo.html', {
-                'pedidos': pedidos,
+                'pedidos_con_totales': pedidos_con_totales,
                 'metodos': metodos,
+                'config': config,
+                'modo_automatico': True,
+                'es_recibo_manual': True,
             })
 
-        recibo = Recibo.objects.create(
-            pedido=Pedido.objects.get(pk=ped_id),
-            metodo_pago=MetodoPago.objects.get(pk=met_id),
-            subtotal=request.POST.get('subtotal', 0),
-            iva_total=request.POST.get('iva_total', 0),
-            total_pagado=total,
-            puntos_ganados=0,
-        )
+        pedido = Pedido.objects.prefetch_related('detalles').get(pk=ped_id)
+        metodo = MetodoPago.objects.get(pk=met_id)
+
+        if not pedido.detalles.exists():
+            messages.error(
+                request,
+                "El pedido no tiene productos en el detalle. Agrega líneas al pedido primero.",
+            )
+            return render(request, 'recibo/form_recibo.html', {
+                'pedidos_con_totales': pedidos_con_totales,
+                'metodos': metodos,
+                'config': config,
+                'modo_automatico': True,
+                'es_recibo_manual': True,
+            })
+
+        subtotal, iva_total, total = calcular_totales_desde_pedido(pedido)
+        recibo, _ = generar_recibo_si_aplica(pedido, metodo_pago=metodo)
+        if not recibo:
+            recibo = Recibo.objects.create(
+                pedido=pedido,
+                metodo_pago=metodo,
+                subtotal=subtotal,
+                iva_total=iva_total,
+                total_pagado=total,
+                puntos_ganados=0,
+            )
+        else:
+            recibo.metodo_pago = metodo
+            recibo.subtotal = subtotal
+            recibo.iva_total = iva_total
+            recibo.total_pagado = total
+            recibo.save(update_fields=['metodo_pago', 'subtotal', 'iva_total', 'total_pagado'])
 
         from pedido.bonos import otorgar_bono_si_aplica
         bonos = otorgar_bono_si_aplica(recibo.pedido)
 
+        messages.warning(
+            request,
+            "⚠️ Recibo registrado de forma manual. Lo habitual es que el sistema lo genere "
+            "al finalizar la compra del cliente o al agregar productos al detalle del pedido.",
+        )
         if bonos > 0:
             usuario = recibo.pedido.usuario
             messages.success(
                 request,
-                f"✓ Recibo #{recibo.id} creado exitosamente. "
+                f"✓ Recibo #{recibo.id} creado manualmente. "
                 f"Cliente ganó {bonos} bono(s) (Total: {usuario.bonos_fidelidad} bonos)."
             )
         else:
-            messages.success(request, f"✓ Recibo #{recibo.id} creado exitosamente.")
+            messages.success(
+                request,
+                f"✓ Recibo #{recibo.id} creado manualmente con totales del pedido.",
+            )
 
         return redirect('detalle_recibo', id=recibo.id)
 
+    if not pedidos_con_totales:
+        messages.info(
+            request,
+            "No hay pedidos pendientes de recibo. El sistema ya generó los recibos automáticamente.",
+        )
+
     return render(request, 'recibo/form_recibo.html', {
-        'pedidos': pedidos,
+        'pedidos_con_totales': pedidos_con_totales,
         'metodos': metodos,
         'config': config,
+        'modo_automatico': True,
+        'es_recibo_manual': True,
     })
 
 
@@ -136,9 +213,10 @@ def editar_recibo(request, id):
 
         recibo.pedido = Pedido.objects.get(pk=ped_id)
         recibo.metodo_pago = MetodoPago.objects.get(pk=met_id)
-        recibo.subtotal = request.POST.get('subtotal', 0)
-        recibo.iva_total = request.POST.get('iva_total', 0)
-        recibo.total_pagado = request.POST.get('total', 0)
+        subtotal, iva_total, total = calcular_totales_desde_pedido(recibo.pedido)
+        recibo.subtotal = subtotal
+        recibo.iva_total = iva_total
+        recibo.total_pagado = total
         nuevo_bonos = int(request.POST.get('puntos_ganados', 0) or 0)
         anterior_bonos = recibo.puntos_ganados
         recibo.puntos_ganados = nuevo_bonos

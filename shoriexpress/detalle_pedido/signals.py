@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.db import transaction
 
 from pedido.models import Pedido
+from recibo.services import sincronizar_recibo_con_pedido
 from .models import DetallePedido
 
 
@@ -35,3 +36,5 @@ def recalcular_total_pedido(sender, instance, **kwargs):
             total = subtotal_lineas
         pedido.total_pedido = total
         pedido.save(update_fields=['total_pedido'])
+
+    sincronizar_recibo_con_pedido(pedido)

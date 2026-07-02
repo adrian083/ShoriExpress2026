@@ -46,6 +46,12 @@ def procesar_inventario_por_pedido(sender, instance, created, **kwargs):
     if not entra_en_preparacion:
         return
 
+    if MovimientoInventario.objects.filter(
+        tipo_movimiento="salida_venta",
+        observaciones__icontains=f"pedido #{instance.pk}",
+    ).exists():
+        return
+
     with transaction.atomic():
         detalles = instance.detalles.all()
         for detalle in detalles:

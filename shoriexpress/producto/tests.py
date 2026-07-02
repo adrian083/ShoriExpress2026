@@ -144,6 +144,30 @@ class ProductoAvailabilityTest(TestCase):
         self.assertEqual(session.get('cart', {}), {})
 
     def test_set_cantidad_carrito_via_get(self):
+        Receta.objects.create(
+            producto=self.producto,
+            insumo=self.insumo,
+            cantidad_requerida=Decimal('1.00'),
+        )
+        with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
+            self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
+
+        response = self.client.get(
+            reverse('set_cantidad_carrito', kwargs={'producto_id': self.producto.pk}),
+            {'cantidad': 1, 'ajax': '1'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['items'][0]['cantidad'], 1)
+
+    def test_set_cantidad_carrito_rechaza_cantidad_sobre_stock(self):
+        Receta.objects.create(
+            producto=self.producto,
+            insumo=self.insumo,
+            cantidad_requerida=Decimal('1.00'),
+        )
         with patch('producto.views.HorarioComercialValidator.es_dentro_horario', return_value=True):
             self.client.get(reverse('agregar_al_carrito', kwargs={'producto_id': self.producto.pk}))
 
@@ -154,6 +178,58 @@ class ProductoAvailabilityTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertTrue(data['success'])
-        self.assertEqual(data['items'][0]['cantidad'], 3)
+        self.assertFalse(data['success'])
+        self.assertEqual(data['items'][0]['cantidad'], 1)
+
+    def test_crear_producto_rechaza_duplicado_mismo_nombre_y_descripcion(self):
+        Producto.objects.create(
+            nombre_producto='Perro Duplicado',
+            descripcion_producto='Con queso y papas',
+            precio_venta=Decimal('10.00'),
+            esta_disponible=True,
+            esta_habilitado=True,
+        )
+        session = self.client.session
+        session['usuario_id'] = self.admin_user.pk
+        session['usuario_rol'] = 'Administrador'
+        session.save()
+
+        response = self.client.post(
+            reverse('crear_producto'),
+            {
+                'nombre': 'perro duplicado',
+                'descripcion': 'Con queso y papas',
+                'precio': '12.00',
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ya existe un producto con ese nombre')
+        self.assertEqual(Producto.objects.filter(nombre_producto__iexact='perro duplicado').count(), 1)
+
+    def test_rechaza_mismo_nombre_aunque_descripcion_diferente(self):
+        Producto.objects.create(
+            nombre_producto='Combo Especial',
+            descripcion_producto='Con queso',
+            precio_venta=Decimal('10.00'),
+            esta_disponible=True,
+            esta_habilitado=True,
+        )
+        session = self.client.session
+        session['usuario_id'] = self.admin_user.pk
+        session['usuario_rol'] = 'Administrador'
+        session.save()
+
+        response = self.client.post(
+            reverse('crear_producto'),
+            {
+                'nombre': 'Combo Especial',
+                'descripcion': 'Con tocino y huevo',
+                'precio': '14.00',
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ya existe un producto con ese nombre')
+        self.assertEqual(Producto.objects.filter(nombre_producto__iexact='Combo Especial').count(), 1)
 

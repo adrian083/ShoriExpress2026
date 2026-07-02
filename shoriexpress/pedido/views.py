@@ -17,7 +17,7 @@ from metodo_pago.models import MetodoPago
 from inventario.models import Inventario
 from movimiento_inventario.models import MovimientoInventario
 from receta.models import Receta
-from recibo.models import Recibo
+from recibo.services import sincronizar_recibo_con_pedido
 from usuario.models import Usuario
 from producto.cart import Cart
 from producto.horario_validator import HorarioComercialValidator
@@ -139,13 +139,24 @@ def finalizar_compra(request):
 
             # Validar stock de insumos antes de confirmar
             for producto, cantidad, _ in lineas:
+                max_unidades = None
+                from producto.stock_utils import max_unidades_por_inventario
+                max_unidades = max_unidades_por_inventario(producto)
+                if max_unidades is not None and cantidad > max_unidades:
+                    messages.error(
+                        request,
+                        f"La cantidad de «{producto.nombre_producto}» ({cantidad}) supera el stock disponible "
+                        f"({max_unidades}). Ajusta la cantidad en tu carrito e intenta de nuevo.",
+                    )
+                    return redirect("ver_carrito")
                 for receta in Receta.objects.filter(producto=producto).select_related('insumo'):
                     requerido = receta.cantidad_requerida * cantidad
                     if receta.insumo.stock_actual < requerido:
                         messages.error(
                             request,
-                            f"No hay suficiente stock de '{receta.insumo.nombre_insumo}' para '{producto.nombre_producto}'. "
-                            f"Disponible: {receta.insumo.stock_actual}, requerido: {requerido}."
+                            f"Stock insuficiente para «{producto.nombre_producto}». "
+                            f"Disponible para {max_unidades or 0} unidad(es). "
+                            "Indica en el carrito una cantidad que podamos preparar.",
                         )
                         return redirect("ver_carrito")
 
@@ -196,20 +207,13 @@ def finalizar_compra(request):
                         observaciones=f"Venta pedido #{pedido.id}, detalle #{detalle.id}",
                     )
 
-            subtotal = (total_decimal / Decimal("1.19")).quantize(Decimal("0.01"))
-            iva_total = (total_decimal - subtotal).quantize(Decimal("0.01"))
-
             if redimio:
                 usuario_instancia.save(update_fields=["bonos_fidelidad"])
 
-            Recibo.objects.create(
-                pedido=pedido,
-                metodo_pago=metodo,
-                subtotal=subtotal,
-                iva_total=iva_total,
-                total_pagado=total_decimal,
-                puntos_ganados=0,
-            )
+            recibo, _ = sincronizar_recibo_con_pedido(pedido)
+            if recibo and recibo.metodo_pago_id != metodo.pk:
+                recibo.metodo_pago = metodo
+                recibo.save(update_fields=["metodo_pago"])
 
             cart.clear()
 
@@ -350,7 +354,7 @@ def crear_pedido(request):
 
         messages.success(
             request,
-            "Pedido creado. El recibo y los bonos se registran al generar el pago (recibo).",
+            "Pedido creado. Al agregar productos al detalle, el recibo se generará automáticamente.",
         )
 
         return redirect('lista_pedidos')

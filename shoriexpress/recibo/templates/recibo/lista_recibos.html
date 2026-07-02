@@ -4,9 +4,12 @@
 {% block content %}
 <div class="se-page-header">
     <h2>Gestión de Recibos / Facturas</h2>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
         <a href="{% url 'descargar_reporte_recibos_pdf' %}" class="se-btn se-btn-outline">📊 Reporte PDF</a>
-        <a href="{% url 'crear_recibo' %}" class="se-btn se-btn-primary">+ Nuevo Recibo</a>
+        <a href="{% url 'crear_recibo' %}" class="se-btn se-btn-outline" style="border-color:#d97706;color:#b45309;"
+           title="Solo para casos excepcionales. Lo normal es que el recibo se genere automáticamente.">
+            ⚠️ Recibo manual (excepcional)
+        </a>
     </div>
 </div>
 

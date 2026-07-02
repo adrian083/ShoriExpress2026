@@ -189,6 +189,9 @@ def landing(request):
 @ensure_csrf_cookie
 def ver_carrito(request):
     """Vista para visualizar los productos agregados al carrito."""
+    from producto.models import Producto
+    from producto.stock_utils import max_unidades_por_inventario
+
     usuario_logueado = _get_usuario_sesion(request)
     metodo_efectivo = MetodoPago.objects.filter(
         esta_activo=True, nombre_metodo__iexact="Efectivo"
@@ -196,8 +199,17 @@ def ver_carrito(request):
 
     cart = Cart(request)
     total = 0.0
-    for _, value in cart.cart.items():
-        total += float(value["precio"]) * int(value["cantidad"])
+    cart_items = []
+    for key, value in cart.cart.items():
+        line_total = float(value["precio"]) * int(value["cantidad"])
+        total += line_total
+        producto = Producto.objects.filter(pk=value.get("producto_id") or key).first()
+        max_disponible = max_unidades_por_inventario(producto) if producto else None
+        cart_items.append({
+            "key": key,
+            "value": value,
+            "max_disponible": max_disponible,
+        })
 
     bonos = int(getattr(usuario_logueado, "bonos_fidelidad", 0) or 0) if usuario_logueado else 0
     puede_redimir = bonos >= 5 and total > 0
@@ -214,6 +226,7 @@ def ver_carrito(request):
         'descuento_bonos_valor': descuento_valor,
         'total_con_descuento_bonos': total_con_descuento,
         'horario': horario,
+        'cart_items': cart_items,
     })
 
 

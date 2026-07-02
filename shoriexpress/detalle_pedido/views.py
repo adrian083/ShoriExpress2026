@@ -13,6 +13,7 @@ from producto.models import Producto
 from usuario.models import Usuario
 
 from .models import DetallePedido
+from recibo.services import sincronizar_recibo_con_pedido
 
 
 def _normalizar_fecha(value):
@@ -174,7 +175,11 @@ def crear_detalle(request):
             if detalles_desc:
                 d0 = detalles_desc[0]
                 extra = f" Se descontaron {d0['cantidad_descontada']} unidades de {d0['insumo']}."
-            messages.success(request, f"Detalle creado correctamente.{extra}")
+            msg = f"Detalle creado correctamente.{extra}"
+            _, recibo_creado = sincronizar_recibo_con_pedido(pedido)
+            if recibo_creado:
+                msg += " Recibo generado automáticamente."
+            messages.success(request, msg)
             return redirect('lista_detalles')
             
         except (ValueError, InvalidOperation) as e:

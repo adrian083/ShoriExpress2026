@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from .managers import ProductoManager
 
@@ -68,6 +69,12 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre_producto
+
+    def clean(self):
+        from .validators import validar_producto_unico
+
+        super().clean()
+        validar_producto_unico(self.nombre_producto, excluir_pk=self.pk)
     
     def check_ingredient_stock(self):
         """

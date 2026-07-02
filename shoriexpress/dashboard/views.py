@@ -336,6 +336,7 @@ def carga_masiva(request):
             for idx, row in enumerate(reader, start=2):
                 try:
                     nombre = (row.get("nombre_producto") or "").strip()
+                    descripcion = (row.get("descripcion_producto") or "").strip()
                     nombre_norm = _nombre_normalizado(nombre)
                     if not nombre_norm:
                         raise ValueError("nombre_producto vacío")
@@ -356,10 +357,15 @@ def carga_masiva(request):
                     }
 
                     with transaction.atomic():
-                        candidatos = list(Producto.objects.select_for_update().filter(nombre_producto__iexact=nombre))
-                        if len(candidatos) > 1:
-                            raise ValueError("ya existen múltiples productos con ese nombre en la base de datos")
-                        obj = candidatos[0] if candidatos else None
+                        from producto.validators import buscar_duplicado_producto
+
+                        obj = buscar_duplicado_producto(nombre)
+                        if obj and Producto.objects.filter(
+                            nombre_producto__iexact=nombre
+                        ).exclude(pk=obj.pk).count() > 0:
+                            raise ValueError(
+                                "existen múltiples productos con ese nombre en la base de datos"
+                            )
 
                         if obj:
                             for k, v in defaults.items():

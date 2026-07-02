@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -12,22 +13,12 @@ from .cart import Cart
 from .cart_helpers import cart_action_response, wants_json, cart_payload
 from .horario_validator import HorarioComercialValidator
 from receta.models import Receta
+from .stock_utils import max_unidades_por_inventario, mensaje_stock_limitado
+from .validators import validar_producto_unico
 
 
 def _max_unidades_por_inventario(producto):
-    recetas = Receta.objects.select_related("insumo").filter(producto=producto)
-    if not recetas.exists():
-        return None
-    maximos = []
-    for r in recetas:
-        if r.cantidad_requerida is None or r.cantidad_requerida <= 0:
-            continue
-        if r.insumo.stock_actual is None or r.insumo.stock_actual <= 0:
-            return 0
-        maximos.append(int(Decimal(r.insumo.stock_actual) // Decimal(r.cantidad_requerida)))
-    if not maximos:
-        return None
-    return max(0, min(maximos))
+    return max_unidades_por_inventario(producto)
 
 
 @require_GET
@@ -74,15 +65,20 @@ def agregar_item(request, producto_id):
 
     actual = int(cart.cart.get(str(producto.pk), {}).get("cantidad", 0))
     max_disponible = _max_unidades_por_inventario(producto)
-    if max_disponible is not None and (actual + 1) > max_disponible:
-        if max_disponible <= 0:
-            msg = f"❌ Sin stock disponible para {producto.nombre_producto}."
-        else:
-            msg = f"⚠️ No puedes agregar más de {max_disponible} unidad(es) de {producto.nombre_producto}."
+    if max_disponible is not None and max_disponible <= 0:
+        msg = mensaje_stock_limitado(producto, max_disponible)
         return cart_action_response(request, message=msg, message_type='error')
+
+    if max_disponible is not None and (actual + 1) > max_disponible:
+        msg = mensaje_stock_limitado(producto, max_disponible)
+        if actual > 0:
+            msg += " Ya tienes unidades en el carrito; ajusta la cantidad manualmente."
+        return cart_action_response(request, message=msg, message_type='warning', redirect_name='ver_carrito')
 
     cart.add(producto=producto)
     msg = f"✓ ¡{producto.nombre_producto} agregado al carrito!"
+    if max_disponible is not None and max_disponible <= 5:
+        msg += f" Stock disponible: {max_disponible} unidad(es)."
     if wants_json(request):
         return cart_action_response(request, message=msg, message_type='success')
 
@@ -166,22 +162,16 @@ def set_cantidad_carrito(request, producto_id):
         )
 
     max_disponible = _max_unidades_por_inventario(producto)
-    msg_type = 'success'
-    msg = f"Cantidad de {producto.nombre_producto} actualizada a {cantidad}."
     if max_disponible is not None and cantidad > max_disponible:
-        cantidad = max(0, max_disponible)
-        if cantidad == 0:
-            cart.remove(producto)
-            return cart_action_response(
-                request,
-                message=f"❌ Sin stock disponible para {producto.nombre_producto}.",
-                message_type='error',
-            )
-        msg = f"⚠️ Solo hay {cantidad} unidad(es) disponible(s) de {producto.nombre_producto}."
-        msg_type = 'warning'
+        msg = (
+            f"Solo hay {max_disponible} unidad(es) disponible(s) de {producto.nombre_producto}. "
+            "Indica una cantidad menor o igual en el carrito."
+        )
+        return cart_action_response(request, message=msg, message_type='error')
 
     cart.set_quantity(producto, cantidad)
-    return cart_action_response(request, message=msg, message_type=msg_type)
+    msg = f"Cantidad de {producto.nombre_producto} actualizada a {cantidad}."
+    return cart_action_response(request, message=msg, message_type='success')
 
 
 @require_http_methods(["GET", "POST"])
@@ -237,10 +227,16 @@ def crear_producto(request):
     from_receta = request.GET.get('from_receta', '')
 
     if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        descripcion = request.POST.get('descripcion', '')
+        nombre = (request.POST.get('nombre') or '').strip()
+        descripcion = (request.POST.get('descripcion') or '').strip()
         precio = request.POST.get('precio')
         imagen = request.FILES.get('imagen')
+
+        try:
+            validar_producto_unico(nombre)
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+            return render(request, 'producto/form_producto.html', {'from_receta': from_receta})
 
         producto = Producto.objects.create(
             nombre_producto=nombre,
@@ -271,8 +267,17 @@ def editar_producto(request, id):
     producto = get_object_or_404(Producto, pk=id)
 
     if request.method == 'POST':
-        producto.nombre_producto = request.POST.get('nombre')
-        producto.descripcion_producto = request.POST.get('descripcion', '')
+        nombre = (request.POST.get('nombre') or '').strip()
+        descripcion = (request.POST.get('descripcion') or '').strip()
+
+        try:
+            validar_producto_unico(nombre, excluir_pk=producto.pk)
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+            return render(request, 'producto/form_producto.html', {'producto': producto})
+
+        producto.nombre_producto = nombre
+        producto.descripcion_producto = descripcion
         producto.precio_venta = request.POST.get('precio')
         producto.registro_movimiento_inicial = request.POST.get(
             'registro_movimiento_inicial', ''

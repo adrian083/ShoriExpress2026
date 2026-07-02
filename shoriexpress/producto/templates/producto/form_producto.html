@@ -24,10 +24,11 @@
                 </div>
 
                 <div class="se-col-12 se-form-group">
-                    <label class="se-form-label" for="descripcion">Descripción *</label>
+                    <label class="se-form-label" for="descripcion">Descripción / Especificaciones *</label>
                     <textarea id="descripcion" name="descripcion" class="se-form-control" 
                               rows="3" required placeholder="Describe los ingredientes principales o el tamaño..."
                               maxlength="500">{{ producto.descripcion_producto|default:'' }}</textarea>
+                    <small class="se-form-hint">El nombre debe ser único; no puede repetirse otro producto con el mismo nombre.</small>
                 </div>
 
                 <div class="se-col-6 se-form-group">

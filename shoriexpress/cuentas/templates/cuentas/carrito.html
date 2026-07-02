@@ -359,29 +359,42 @@
                 </thead>
                 <tbody id="cart-items-body">
                     {% if cart_count %}
-                        {% for key, value in request.session.cart.items %}
-                        <tr data-product-id="{{ key }}">
-                            <td><span class="product-name">{{ value.nombre }}</span></td>
+                        {% for item in cart_items %}
+                        <tr data-product-id="{{ item.key }}">
+                            <td>
+                                <span class="product-name">{{ item.value.nombre }}</span>
+                                {% if item.max_disponible is not None %}
+                                <div class="stock-hint" style="font-size:0.8rem;color:var(--text-muted,#64748b);margin-top:4px;">
+                                    Stock disponible: <strong>{{ item.max_disponible }}</strong> unidad(es).
+                                    {% if item.max_disponible == 0 %}
+                                    Sin stock — elimina este producto o espera reposición.
+                                    {% else %}
+                                    Indica cuántas deseas comprar (máx. {{ item.max_disponible }}).
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
                             <td class="text-center">
                                 <div class="quantity-controls">
-                                    <a href="{% url 'restar_producto' key %}?ajax=1" class="se-btn se-btn-outline se-btn-sm cart-restar-link" title="Quitar una unidad">−</a>
+                                    <a href="{% url 'restar_producto' item.key %}?ajax=1" class="se-btn se-btn-outline se-btn-sm cart-restar-link" title="Quitar una unidad">−</a>
                                     <input
                                         type="number"
                                         min="1"
-                                        max="999"
+                                        {% if item.max_disponible is not None %}max="{{ item.max_disponible }}"{% else %}max="999"{% endif %}
                                         class="cart-qty-input"
-                                        value="{{ value.cantidad }}"
-                                        data-product-id="{{ key }}"
-                                        aria-label="Cantidad de {{ value.nombre }}"
-                                        title="Escribe la cantidad y presiona Enter"
+                                        value="{{ item.value.cantidad }}"
+                                        data-product-id="{{ item.key }}"
+                                        {% if item.max_disponible is not None %}data-max-stock="{{ item.max_disponible }}"{% endif %}
+                                        aria-label="Cantidad de {{ item.value.nombre }}"
+                                        title="Escribe la cantidad que deseas comprar y presiona Enter"
                                     >
-                                    <a href="{% url 'agregar_al_carrito' key %}?next={% url 'ver_carrito' %}&ajax=1" class="se-btn se-btn-outline se-btn-sm cart-add-link" title="Agregar una unidad">+</a>
+                                    <a href="{% url 'agregar_al_carrito' item.key %}?next={% url 'ver_carrito' %}&ajax=1" class="se-btn se-btn-outline se-btn-sm cart-add-link" title="Agregar una unidad">+</a>
                                 </div>
                             </td>
-                            <td class="price-cell">${{ value.precio }}</td>
-                            <td class="total-cell">${{ value.total }}</td>
+                            <td class="price-cell">${{ item.value.precio }}</td>
+                            <td class="total-cell">${{ item.value.total }}</td>
                             <td class="text-center">
-                                <a href="{% url 'eliminar_del_carrito' key %}?ajax=1" class="se-btn se-btn-outline-red se-btn-sm cart-remove-link" title="Eliminar del carrito">🗑️</a>
+                                <a href="{% url 'eliminar_del_carrito' item.key %}?ajax=1" class="se-btn se-btn-outline-red se-btn-sm cart-remove-link" title="Eliminar del carrito">🗑️</a>
                             </td>
                         </tr>
                         {% endfor %}
