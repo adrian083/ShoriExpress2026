@@ -13,34 +13,47 @@
         {% endif %}
     </div>
     <div class="se-form-body">
+        {% if form_error %}
+        <div class="se-alert se-alert-error" id="producto-form-error" role="alert" style="margin-bottom: 20px;">
+            <strong>No se guardó el producto</strong>
+            <p style="margin: 8px 0 0;">{{ form_error }}</p>
+        </div>
+        {% endif %}
+
         <form method="POST" enctype="multipart/form-data" id="productoForm">
             {% csrf_token %}
             <div class="se-form-grid">
                 <div class="se-col-12 se-form-group">
                     <label class="se-form-label" for="nombre">Nombre del Producto *</label>
-                    <input type="text" id="nombre" name="nombre" class="se-form-control" 
-                           value="{{ producto.nombre_producto|default:'' }}" 
-                           placeholder="Ej: Choripán Especial" required minlength="3" maxlength="100">
+                    <input type="text" id="nombre" name="nombre" class="se-form-control{% if error_en_nombre %} is-invalid{% endif %}" 
+                           value="{% if form_values %}{{ form_values.nombre_producto }}{% else %}{{ producto.nombre_producto|default:'' }}{% endif %}" 
+                           placeholder="Ej: Choripán Especial" required minlength="3" maxlength="100"
+                           {% if error_en_nombre %}aria-invalid="true"{% endif %}>
+                    {% if error_en_nombre %}
+                    <small class="se-form-hint" style="color: var(--accent-red, #dc2626);">
+                        Revisa el nombre: ya existe otro producto con ese nombre.
+                    </small>
+                    {% endif %}
                 </div>
 
                 <div class="se-col-12 se-form-group">
                     <label class="se-form-label" for="descripcion">Descripción / Especificaciones *</label>
                     <textarea id="descripcion" name="descripcion" class="se-form-control" 
                               rows="3" required placeholder="Describe los ingredientes principales o el tamaño..."
-                              maxlength="500">{{ producto.descripcion_producto|default:'' }}</textarea>
+                              maxlength="500">{% if form_values %}{{ form_values.descripcion_producto }}{% else %}{{ producto.descripcion_producto|default:'' }}{% endif %}</textarea>
                     <small class="se-form-hint">El nombre debe ser único; no puede repetirse otro producto con el mismo nombre.</small>
                 </div>
 
                 <div class="se-col-6 se-form-group">
                     <label class="se-form-label" for="precio">Precio de Venta ($) *</label>
                     <input type="number" step="0.01" id="precio" name="precio" class="se-form-control" 
-                           value="{{ producto.precio_venta|default:'' }}" placeholder="Ej: 15000" 
+                           value="{% if form_values %}{{ form_values.precio_venta }}{% else %}{{ producto.precio_venta|default:'' }}{% endif %}" placeholder="Ej: 15000" 
                            required min="0">
                 </div>
 
                 <div class="se-col-12 se-form-group">
                     <label class="se-form-label" for="registro_movimiento_inicial">Registro de movimiento inicial (opcional)</label>
-                    <textarea id="registro_movimiento_inicial" name="registro_movimiento_inicial" class="se-form-control" rows="2" maxlength="500" placeholder="Ej: Lote de prueba, proveedor, nota de abastecimiento al dar de alta el plato...">{{ producto.registro_movimiento_inicial|default:'' }}</textarea>
+                    <textarea id="registro_movimiento_inicial" name="registro_movimiento_inicial" class="se-form-control" rows="2" maxlength="500" placeholder="Ej: Lote de prueba, proveedor, nota de abastecimiento al dar de alta el plato...">{% if form_values %}{{ form_values.registro_movimiento_inicial }}{% else %}{{ producto.registro_movimiento_inicial|default:'' }}{% endif %}</textarea>
                     <span class="se-form-hint">Campo de auditoría: qué quedó registrado del primer abastecimiento o alta del producto.</span>
                 </div>
 
@@ -54,7 +67,7 @@
                 <div class="se-col-6 se-form-group">
                     <label class="se-form-label" for="imagen_catalogo">Nombre de imagen guardada (opcional)</label>
                     <input type="text" name="imagen_catalogo" id="imagen_catalogo" class="se-form-control"
-                           value="{{ producto.imagen_catalogo|default:'' }}"
+                           value="{% if form_values %}{{ form_values.imagen_catalogo }}{% else %}{{ producto.imagen_catalogo|default:'' }}{% endif %}"
                            placeholder="ej. productos/perro-clasico.jpg"
                            maxlength="255" autocomplete="off">
                     <span class="se-form-hint">Escribe el nombre del archivo de imagen (por ejemplo: <code>productos/perro-clasico.jpg</code>). También puedes dejarlo vacío y el sistema intentará encontrar una imagen automáticamente por nombre.</span>
@@ -97,7 +110,7 @@
                 ">
                     <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; color: var(--text-main);">
                         <input type="checkbox" name="crear_receta_despues" value="1"
-                               {% if from_receta %}checked{% endif %}
+                               {% if form_values %}{% if form_values.crear_receta_despues %}checked{% endif %}{% elif from_receta %}checked{% endif %}
                                style="width: 18px; height: 18px; accent-color: var(--accent-green, #22c55e);">
                         <span>📋 Crear receta (asignar ingredientes) después de guardar</span>
                     </label>
@@ -154,5 +167,16 @@ document.getElementById('productoForm').addEventListener('submit', function(e) {
         }
     }
 });
+
+(function() {
+    const err = document.getElementById('producto-form-error');
+    if (err) {
+        err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const nombre = document.getElementById('nombre');
+        if (nombre) {
+            nombre.focus();
+        }
+    }
+})();
 </script>
 {% endblock %}

@@ -205,6 +205,9 @@ class ProductoAvailabilityTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Ya existe un producto con ese nombre')
+        self.assertContains(response, 'No se guardó el producto')
+        self.assertContains(response, 'perro duplicado')
+        self.assertContains(response, 'Con queso y papas')
         self.assertEqual(Producto.objects.filter(nombre_producto__iexact='perro duplicado').count(), 1)
 
     def test_rechaza_mismo_nombre_aunque_descripcion_diferente(self):

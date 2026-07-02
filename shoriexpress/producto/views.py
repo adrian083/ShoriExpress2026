@@ -21,6 +21,66 @@ def _max_unidades_por_inventario(producto):
     return max_unidades_por_inventario(producto)
 
 
+def _contexto_form_producto(request, *, producto=None, from_receta='', form_error=''):
+    """Conserva los datos del formulario y el error visible si falla el guardado."""
+    usar_post = request.method == 'POST'
+    form_values = {
+        'nombre_producto': (
+            (request.POST.get('nombre') or '').strip()
+            if usar_post
+            else getattr(producto, 'nombre_producto', '') or ''
+        ),
+        'descripcion_producto': (
+            (request.POST.get('descripcion') or '').strip()
+            if usar_post
+            else getattr(producto, 'descripcion_producto', '') or ''
+        ),
+        'precio_venta': (
+            request.POST.get('precio', '')
+            if usar_post
+            else getattr(producto, 'precio_venta', '') or ''
+        ),
+        'registro_movimiento_inicial': (
+            (request.POST.get('registro_movimiento_inicial') or '').strip()
+            if usar_post
+            else getattr(producto, 'registro_movimiento_inicial', '') or ''
+        ),
+        'imagen_catalogo': (
+            (request.POST.get('imagen_catalogo') or '').strip()
+            if usar_post
+            else getattr(producto, 'imagen_catalogo', '') or ''
+        ),
+        'crear_receta_despues': (
+            request.POST.get('crear_receta_despues') == '1'
+            if usar_post
+            else bool(from_receta)
+        ),
+    }
+    return {
+        'producto': producto,
+        'from_receta': from_receta,
+        'form_values': form_values,
+        'form_error': form_error,
+        'error_en_nombre': bool(
+            form_error and 'nombre' in form_error.lower()
+        ),
+    }
+
+
+def _render_form_producto_con_error(request, *, producto=None, from_receta='', mensaje=''):
+    messages.error(request, mensaje)
+    return render(
+        request,
+        'producto/form_producto.html',
+        _contexto_form_producto(
+            request,
+            producto=producto,
+            from_receta=from_receta,
+            form_error=mensaje,
+        ),
+    )
+
+
 @require_GET
 def api_configuracion_horario(request):
     """
@@ -232,23 +292,49 @@ def crear_producto(request):
         precio = request.POST.get('precio')
         imagen = request.FILES.get('imagen')
 
+        if not nombre or len(nombre) < 3:
+            return _render_form_producto_con_error(
+                request,
+                from_receta=from_receta,
+                mensaje='El nombre del producto debe tener al menos 3 caracteres.',
+            )
+
         try:
             validar_producto_unico(nombre)
         except ValidationError as exc:
-            messages.error(request, exc.messages[0])
-            return render(request, 'producto/form_producto.html', {'from_receta': from_receta})
+            return _render_form_producto_con_error(
+                request,
+                from_receta=from_receta,
+                mensaje=exc.messages[0],
+            )
 
-        producto = Producto.objects.create(
-            nombre_producto=nombre,
-            descripcion_producto=descripcion,
-            precio_venta=precio,
-            imagen=imagen,
-            imagen_catalogo=(request.POST.get("imagen_catalogo") or "").strip(),
-            registro_movimiento_inicial=request.POST.get(
-                "registro_movimiento_inicial", ""
-            ).strip()
-            or None,
-        )
+        try:
+            producto = Producto(
+                nombre_producto=nombre,
+                descripcion_producto=descripcion,
+                precio_venta=precio,
+                imagen=imagen,
+                imagen_catalogo=(request.POST.get("imagen_catalogo") or "").strip(),
+                registro_movimiento_inicial=request.POST.get(
+                    "registro_movimiento_inicial", ""
+                ).strip()
+                or None,
+            )
+            producto.full_clean()
+            producto.save()
+        except ValidationError as exc:
+            msg = exc.messages[0] if getattr(exc, 'messages', None) else str(exc)
+            return _render_form_producto_con_error(
+                request,
+                from_receta=from_receta,
+                mensaje=msg,
+            )
+        except Exception as exc:
+            return _render_form_producto_con_error(
+                request,
+                from_receta=from_receta,
+                mensaje=f'No se pudo guardar el producto: {exc}',
+            )
 
         crear_receta_despues = request.POST.get('crear_receta_despues')
         if crear_receta_despues:
@@ -258,7 +344,11 @@ def crear_producto(request):
         messages.success(request, f"Producto '{nombre}' creado exitosamente.")
         return redirect('lista_productos')
 
-    return render(request, 'producto/form_producto.html', {'from_receta': from_receta})
+    return render(
+        request,
+        'producto/form_producto.html',
+        _contexto_form_producto(request, from_receta=from_receta),
+    )
 
 
 @admin_shori_required
@@ -273,8 +363,11 @@ def editar_producto(request, id):
         try:
             validar_producto_unico(nombre, excluir_pk=producto.pk)
         except ValidationError as exc:
-            messages.error(request, exc.messages[0])
-            return render(request, 'producto/form_producto.html', {'producto': producto})
+            return _render_form_producto_con_error(
+                request,
+                producto=producto,
+                mensaje=exc.messages[0],
+            )
 
         producto.nombre_producto = nombre
         producto.descripcion_producto = descripcion
@@ -288,11 +381,25 @@ def editar_producto(request, id):
         if nueva_imagen:
             producto.imagen = nueva_imagen
 
-        producto.save()
+        try:
+            producto.full_clean()
+            producto.save()
+        except ValidationError as exc:
+            msg = exc.messages[0] if getattr(exc, 'messages', None) else str(exc)
+            return _render_form_producto_con_error(
+                request,
+                producto=producto,
+                mensaje=msg,
+            )
+
         messages.success(request, f"Producto '{producto.nombre_producto}' actualizado.")
         return redirect('lista_productos')
 
-    return render(request, 'producto/form_producto.html', {'producto': producto})
+    return render(
+        request,
+        'producto/form_producto.html',
+        _contexto_form_producto(request, producto=producto),
+    )
 
 
 @admin_shori_required
